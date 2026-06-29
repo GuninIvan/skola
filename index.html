@@ -13,6 +13,7 @@
     --blue:#2F6FE4; --blue-soft:#E4EDFC;
     --green:#1F9D57; --green-soft:#DCF3E6;
     --grey:#8A97A6; --grey-soft:#EAEEF2;
+    --burgundy:#A23B52; --burgundy-soft:#F6E1E5; --burgundy-ink:#8E2F43;
     --shadow:0 1px 2px rgba(23,34,48,.06),0 4px 16px rgba(23,34,48,.05);
     --tap:44px;
   }
@@ -82,7 +83,7 @@
   .chip.active{border-color:var(--ink);color:var(--ink);font-weight:600}
   .chip b{font-weight:700;color:var(--ink)}
   .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-  .dot.open{background:var(--grey)} .dot.check{background:var(--blue)} .dot.done{background:var(--green)}
+  .dot.open{background:var(--burgundy)} .dot.check{background:var(--blue)} .dot.done{background:var(--green)}
   .role-note{font-size:12px;color:var(--muted);padding:3px 14px 9px}
 
   /* pull-to-refresh */
@@ -104,7 +105,7 @@
   .group-head .gbar{flex:1;height:1px;background:var(--line)}
 
   .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap}
-  .b-open{background:var(--grey-soft);color:#566472}
+  .b-open{background:var(--burgundy-soft);color:var(--burgundy-ink)}
   .b-check{background:var(--blue-soft);color:#1d4fb0}
   .b-done{background:var(--green-soft);color:#137a41}
   .elem-tag{font-size:11px;font-weight:600;color:var(--amber-ink);background:var(--amber-soft);padding:2px 8px;border-radius:6px}
@@ -255,7 +256,7 @@
     <div class="group-bar" id="groupBar"></div>
     <div class="stats" id="statusFilter">
       <div class="chip active" data-status="all">Все <b id="cAll">0</b></div>
-      <div class="chip" data-status="open"><span class="dot open"></span>Открыто <b id="cOpen">0</b></div>
+      <div class="chip" data-status="open"><span class="dot open"></span>Не устранено <b id="cOpen">0</b></div>
       <div class="chip" data-status="check"><span class="dot check"></span>На проверке <b id="cCheck">0</b></div>
       <div class="chip" data-status="done"><span class="dot done"></span>Принято <b id="cDone">0</b></div>
     </div>
@@ -283,7 +284,7 @@
 /* ===================== КОНФИГ И КОНСТАНТЫ ===================== */
 const CONFIG = window.CONFIG || {};
 const STATUS = {
-  open:{label:"Открыто",badge:"b-open"},
+  open:{label:"Не устранено",badge:"b-open"},
   check:{label:"На проверке",badge:"b-check"},
   done:{label:"Принято",badge:"b-done"},
 };
