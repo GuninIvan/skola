@@ -39,6 +39,8 @@
 
   /* ---------- Header ---------- */
   header{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:var(--shadow);padding-top:env(safe-area-inset-top)}
+  /* сплошная подложка под зоной выреза/статус-бара, чтобы список не просвечивал сверху */
+  header::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:env(safe-area-inset-top);background:var(--surface)}
   .head-top{display:flex;align-items:center;gap:11px;padding:11px 14px}
   .logo{width:32px;height:32px;border-radius:9px;flex:0 0 auto;background:linear-gradient(135deg,var(--amber),#d98a00);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
   .title h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.2px}
@@ -167,6 +169,8 @@
 
   /* ---------- MOBILE ---------- */
   @media(max-width:640px){
+    header{transition:transform .25s ease;will-change:transform}
+    header.hide{transform:translateY(-100%)}
     .head-top{flex-wrap:wrap;gap:9px}
     .role-badge{order:4;width:100%;justify-content:space-between;border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
     .search{flex-basis:100%}
@@ -639,6 +643,28 @@ document.getElementById("refreshBtn").onclick=()=>loadData(true);
 /* ===================== УТИЛИТЫ ===================== */
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));}
 let toastT;function toast(msg,isErr){const t=document.getElementById("toast");t.textContent=msg;t.className="toast on"+(isErr?" err":"");clearTimeout(toastT);toastT=setTimeout(()=>t.className="toast",2200);}
+
+/* ===================== АВТОСКРЫТИЕ ШАПКИ (только телефон) ===================== */
+(function(){
+  const header=document.querySelector("header");
+  let lastY=window.scrollY||0, ticking=false;
+  const isMobile=()=>window.matchMedia("(max-width:640px)").matches;
+  function onScroll(){
+    const y=window.scrollY||0;
+    if(!isMobile()){ header.classList.remove("hide"); lastY=y; return; }
+    const filtersOpen=document.getElementById("filters").classList.contains("open");
+    const hh=header.offsetHeight;
+    if(y<=hh+10 || filtersOpen) header.classList.remove("hide");      // у верха или открыты фильтры — всегда видна
+    else if(y>lastY+6) header.classList.add("hide");                  // листаем вниз — прячем
+    else if(y<lastY-6) header.classList.remove("hide");               // листаем вверх — показываем
+    lastY=y;
+  }
+  window.addEventListener("scroll",()=>{
+    if(!ticking){ requestAnimationFrame(()=>{onScroll();ticking=false;}); ticking=true; }
+  },{passive:true});
+  // если открыли панель фильтров — гарантированно показать шапку
+  document.getElementById("filtersToggle").addEventListener("click",()=>header.classList.remove("hide"));
+})();
 
 /* ===================== PULL-TO-REFRESH ===================== */
 (function(){
