@@ -314,13 +314,31 @@ const state = {
 };
 
 /* ===================== API ===================== */
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
 async function apiGet(action, params={}){
   const url = new URL(CONFIG.API_URL);
   url.searchParams.set("action", action);
   url.searchParams.set("token", CONFIG.API_TOKEN);
   Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-  const r = await fetch(url.toString(), {method:"GET"});
-  return r.json();
+  // Apps Script изредка отдаёт HTML-заглушку вместо JSON (холодный старт/редирект) —
+  // тогда JSON.parse падает на первом '<'. Это самоустраняется, поэтому делаем до 3
+  // попыток с паузой. Повтор только при сбое сети/парсинга; на нормальный ответ
+  // (в т.ч. {ok:false} вроде BAD_TOKEN) сразу выходим — повторять его бессмысленно.
+  const ATTEMPTS = 3, GAP_MS = 1500;
+  let lastErr;
+  for(let i=1;i<=ATTEMPTS;i++){
+    try{
+      const r = await fetch(url.toString(), {method:"GET", cache:"no-store"});
+      const text = await r.text();
+      try{ return JSON.parse(text); }
+      catch(_){ throw new Error("Сервер вернул не-JSON (возможно, временная заглушка)"); }
+    }catch(err){
+      lastErr = err;
+      if(i < ATTEMPTS) await sleep(GAP_MS);
+    }
+  }
+  throw lastErr;
 }
 async function apiPost(payload){
   // text/plain — чтобы не вызывать CORS-preflight (Apps Script его не обработает)
