@@ -156,7 +156,7 @@
   .v-big .big-grid dt{color:var(--muted)} .v-big .big-grid dd{margin:0;font-weight:600}
   .v-big .big-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 
-  .lightbox{position:fixed;inset:0;z-index:80;background:rgba(10,16,24,.88);display:none;align-items:center;justify-content:center;padding:16px}
+  .lightbox{position:fixed;inset:0;z-index:95;background:rgba(10,16,24,.88);display:none;align-items:center;justify-content:center;padding:16px}
   .lightbox.on{display:flex}
   .lb-inner{max-width:920px;width:100%;max-height:92vh;display:flex;flex-direction:column;gap:10px}
   .lb-inner img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:10px;margin:0 auto;display:block}
@@ -171,7 +171,7 @@
   .retry-btn{margin-top:14px;font-family:inherit;font-size:14px;font-weight:600;background:var(--ink);color:#fff;border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
   .skel{background:var(--surface);border:1px solid var(--line);border-radius:11px;height:70px;margin-bottom:7px;box-shadow:var(--shadow);background-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.03) 40%,transparent 80%);background-size:300% 100%;animation:shimmer 1.3s ease infinite}
 
-  .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:90;max-width:90vw;text-align:center}
+  .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:110;max-width:90vw;text-align:center}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.err{background:#C5331E}
 
@@ -242,7 +242,39 @@
   .big-photos{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--grey-soft)}
   .big-photos .ph-wrap{position:relative;min-width:0}
   .big-photos .big-photo{height:170px}
-  .ph-lab{position:absolute;left:7px;top:7px;font-size:10.5px;font-weight:600;color:#fff;background:rgba(23,34,48,.62);padding:2px 8px;border-radius:20px}
+  .ph-lab{position:absolute;left:7px;top:7px;font-size:10.5px;font-weight:600;color:#fff;background:rgba(23,34,48,.62);padding:2px 8px;border-radius:20px;z-index:2}
+  .ph-lab.was{background:var(--burgundy)}
+  .ph-lab.now{background:var(--green)}
+
+  /* пара миниатюр (Было/Стало) в списке и карточках */
+  .thumb-pair{display:flex;gap:5px;flex:0 0 auto}
+  .tp{position:relative;flex:0 0 auto;line-height:0}
+  .tp-lab{position:absolute;left:3px;bottom:3px;font-size:9px;font-weight:600;color:#fff;padding:1px 5px;border-radius:5px;line-height:1.35;letter-spacing:.2px;z-index:2}
+  .tp-lab.was{background:var(--burgundy)}
+  .tp-lab.now{background:var(--green)}
+
+  /* кнопка «Карточка работы» */
+  .act-card{background:var(--surface);color:var(--ink);border-color:var(--line-strong)}
+  .act-card:hover{background:var(--grey-soft)}
+
+  /* карточка работы (полный просмотр) */
+  #workSheet{z-index:84}
+  .lightbox{z-index:95}
+  .wc-top{display:flex;align-items:center;gap:8px;margin-bottom:13px;flex-wrap:wrap}
+  .wc-photos{display:grid;gap:8px;margin-bottom:14px}
+  .wc-photos.two{grid-template-columns:1fr 1fr}
+  .wc-photos.one{grid-template-columns:1fr}
+  .wc-ph{position:relative;border-radius:11px;overflow:hidden;background:var(--grey-soft);border:1px solid var(--line)}
+  .wc-img{width:100%;height:185px;object-fit:cover;display:block;cursor:pointer;background:var(--grey-soft)}
+  .wc-img.nophoto{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
+  .wc-noph{padding:24px;text-align:center;color:var(--muted);background:var(--grey-soft);border-radius:11px;margin-bottom:14px;font-size:13px}
+  .wc-remark{font-size:16px;font-weight:700;line-height:1.35;margin:0 0 13px}
+  .wc-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:13px;margin:0}
+  .wc-grid dt{color:var(--muted);margin:0}
+  .wc-grid dd{margin:0;text-align:right;font-weight:600;word-break:break-word}
+  .wc-acts{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .wc-acts .act{flex:1 1 130px}
+  @media(max-width:380px){.wc-img{height:140px}}
 </style>
 </head>
 <body>
@@ -366,6 +398,10 @@
       <button class="act act-save" id="editConfirm">Сохранить</button>
     </div>
   </div>
+</div>
+
+<div class="sheet" id="workSheet">
+  <div class="sheet-card" id="workBody"></div>
 </div>
 
 <script src="config.js"></script>
@@ -522,7 +558,7 @@ async function applyAction(id,to,label,photoBase64,photoMime){
     const res=await apiPost(payload);
     if(res.ok && res.remark){
       Object.assign(it,res.remark);               // берём правду с сервера
-      render();
+      render();refreshWork();
       toast(label+" · "+STATUS[to].label);
     }else{
       it.status=prev;render();                     // откат
@@ -715,26 +751,26 @@ function bigPhotos(d){
     :nophotoBox("Фото нет");
   if(!has2) return before;                               // одно фото — как раньше
   const after=`<img class="big-photo loading" data-rid="${esc(d.donePhoto.fileId)}" data-fid="${esc(d.donePhoto.fileId)}" data-donephoto="${esc(d.id)}" alt="Фото исправления">`;
-  return `<div class="big-photos"><div class="ph-wrap"><span class="ph-lab">Было</span>${before}</div><div class="ph-wrap"><span class="ph-lab">Стало</span>${after}</div></div>`;
+  return `<div class="big-photos"><div class="ph-wrap"><span class="ph-lab was">Было</span>${before}</div><div class="ph-wrap"><span class="ph-lab now">Стало</span>${after}</div></div>`;
 }
 function statusBadge(d){const s=STATUS[d.status];return `<span class="badge ${s.badge}">${s.label}</span>`;}
+function photoPair(d){
+  const has1=d.photo&&d.photo.available, has2=d.donePhoto&&d.donePhoto.available;
+  if(!has1&&!has2) return `<div class="thumb nophoto">нет<br>фото</div>`;
+  if(has1&&!has2)  return `<img class="thumb loading" data-rid="${esc(d.id)}" data-fid="${esc(d.photo.fileId)}" data-photo="${esc(d.id)}" alt="Фото замечания">`;
+  const t1=has1?`<div class="tp"><img class="thumb loading" data-rid="${esc(d.id)}" data-fid="${esc(d.photo.fileId)}" data-photo="${esc(d.id)}" alt="Фото дефекта"><span class="tp-lab was">Было</span></div>`:"";
+  const t2=`<div class="tp"><img class="thumb loading" data-rid="${esc(d.donePhoto.fileId)}" data-fid="${esc(d.donePhoto.fileId)}" data-donephoto="${esc(d.id)}" alt="Фото исправления"><span class="tp-lab now">Стало</span></div>`;
+  return `<div class="thumb-pair">${t1}${t2}</div>`;
+}
 function actBtns(d){
-  const acts=actionsFor(d);
-  const editBtn=(state.role==="brusnika")
-    ? `<button class="act act-edit" data-edit="${esc(d.id)}">✎ Изменить</button>` : "";
-  if(!acts.length && !editBtn){
-    if(d.status==="done")return `<span class="locked">✓ принято</span>`;
-    if(state.role==="observer")return `<span class="locked">🔒 просмотр</span>`;
-    return `<span class="locked">—</span>`;
-  }
-  return editBtn + acts.map(a=>`<button class="act ${a.cls}" data-act="${esc(d.id)}|${a.to}|${esc(a.label)}">${esc(a.label)}</button>`).join("");
+  return `<button class="act act-card" data-card="${esc(d.id)}">Карточка работы</button>`;
 }
 function renderItem(d){
   if(state.view==="list"){
-    return `<div class="item">${thumbHTML(d,"")}<div class="li-main"><div class="li-remark">${esc(d.remark)}</div><div class="li-sub"><span class="elem-tag">${esc(d.elem)}</span><span class="meta">Блок <b>${esc(d.block)}</b> · пом. <b>${esc(String(d.room))}</b></span>${statusBadge(d)}</div></div><div class="li-act">${actBtns(d)}</div></div>`;
+    return `<div class="item">${photoPair(d)}<div class="li-main"><div class="li-remark">${esc(d.remark)}</div><div class="li-sub"><span class="elem-tag">${esc(d.elem)}</span><span class="meta">Блок <b>${esc(d.block)}</b> · пом. <b>${esc(String(d.room))}</b></span>${statusBadge(d)}</div></div><div class="li-act">${actBtns(d)}</div></div>`;
   }
   if(state.view==="cards"){
-    return `<div class="item"><div class="c-top">${thumbHTML(d,"")}<div class="c-body"><div class="c-tags"><span class="elem-tag">${esc(d.elem)}</span>${statusBadge(d)}</div><div class="c-remark">${esc(d.remark)}</div><div class="meta">Блок <b>${esc(d.block)}</b> · пом. <b>${esc(String(d.room))}</b>${d.org?" · "+esc(d.org):""}</div></div></div><div class="c-foot"><span class="meta">${esc(d.by||"—")} · ${esc(d.added)}</span><div>${actBtns(d)}</div></div></div>`;
+    return `<div class="item"><div class="c-top">${photoPair(d)}<div class="c-body"><div class="c-tags"><span class="elem-tag">${esc(d.elem)}</span>${statusBadge(d)}</div><div class="c-remark">${esc(d.remark)}</div><div class="meta">Блок <b>${esc(d.block)}</b> · пом. <b>${esc(String(d.room))}</b>${d.org?" · "+esc(d.org):""}</div></div></div><div class="c-foot"><span class="meta">${esc(d.by||"—")} · ${esc(d.added)}</span><div>${actBtns(d)}</div></div></div>`;
   }
   const photo=bigPhotos(d);
   return `<div class="item">${photo}<div class="big-body"><div class="big-tags"><span class="elem-tag">${esc(d.elem)}</span>${statusBadge(d)}</div><div class="big-remark">${esc(d.remark)}</div><dl class="big-grid"><dt>Этаж / Блок</dt><dd>${esc(String(d.floor))} · ${esc(d.block)}</dd><dt>Помещение</dt><dd>${esc(String(d.room))}</dd><dt>Организация</dt><dd>${esc(d.org||"—")}</dd><dt>Внёс</dt><dd>${esc(d.by||"—")} · ${esc(d.added)}</dd></dl><div class="big-foot"><div>${actBtns(d)}</div></div></div></div>`;
@@ -764,10 +800,7 @@ groupBar.addEventListener("click",e=>{
 app.addEventListener("click",e=>{
   const dph=e.target.closest("[data-donephoto]");if(dph&&!dph.classList.contains("nophoto")){openDonePhoto(dph.dataset.donephoto);return;}
   const ph=e.target.closest("[data-photo]");if(ph&&!ph.classList.contains("nophoto")){openPhoto(ph.dataset.photo);return;}
-  const ed=e.target.closest("[data-edit]");if(ed){openEdit(ed.dataset.edit);return;}
-  const act=e.target.closest("[data-act]");if(act){const[id,to,label]=act.dataset.act.split("|");
-    if(to==="check"&&state.role==="contractor"){openCompletion(id,label);return;}
-    applyAction(id,to,label);return;}
+  const cd=e.target.closest("[data-card]");if(cd){openWork(cd.dataset.card);return;}
   const gh=e.target.closest(".group-head");if(gh){const k=gh.dataset.key;state.collapsed.has(k)?state.collapsed.delete(k):state.collapsed.add(k);render();}
 });
 document.getElementById("searchInp").oninput=e=>{state.search=e.target.value;render();};
@@ -904,11 +937,73 @@ editConfirm.onclick=async()=>{
     const res=await apiPost({action:"editRemark", id:editId, sessionToken:state.sessionToken,
       floor:eF.floor.value.trim(), block:eF.block.value.trim(), room:eF.room.value.trim(),
       org:eF.org.value.trim(), elem:eF.elem.value.trim(), remark:eF.remark.value.trim()});
-    if(res.ok&&res.remark){Object.assign(it,res.remark);render();closeEdit();toast("Изменения сохранены");}
+    if(res.ok&&res.remark){Object.assign(it,res.remark);render();refreshWork();closeEdit();toast("Изменения сохранены");}
     else if(res.error==="AUTH"){toast("Сессия истекла, войдите заново",true);state.sessionToken=null;setRole("observer");closeEdit();}
     else{editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast(res.message||"Не удалось сохранить",true);}
   }catch(_){editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast("Ошибка сети при сохранении",true);}
 };
+
+/* ===================== КАРТОЧКА РАБОТЫ ===================== */
+const workSheet=document.getElementById("workSheet"),workBody=document.getElementById("workBody");
+let curWorkId=null;
+function workPhotoBlock(d){
+  const has1=d.photo&&d.photo.available, has2=d.donePhoto&&d.donePhoto.available;
+  if(!has1&&!has2) return `<div class="wc-noph">Фото пока нет</div>`;
+  const before=has1?`<div class="wc-ph"><img class="wc-img big-photo loading" data-rid="${esc(d.id)}" data-fid="${esc(d.photo.fileId)}" data-photo="${esc(d.id)}" alt="Фото дефекта"><span class="ph-lab was">Было</span></div>`:"";
+  const after=has2?`<div class="wc-ph"><img class="wc-img big-photo loading" data-rid="${esc(d.donePhoto.fileId)}" data-fid="${esc(d.donePhoto.fileId)}" data-donephoto="${esc(d.id)}" alt="Фото исправления"><span class="ph-lab now">Стало</span></div>`:"";
+  return `<div class="wc-photos ${(has1&&has2)?'two':'one'}">${before}${after}</div>`;
+}
+function workActions(d){
+  const r=state.role,b=[];
+  if(r==="contractor"&&d.status==="open") b.push(`<button class="act act-done" data-workcomplete="1">Отметить выполнение</button>`);
+  if(r==="brusnika"){
+    b.push(`<button class="act act-edit" data-workedit="1">✎ Исправить</button>`);
+    if(d.status!=="done") b.push(`<button class="act act-accept" data-workact="done|Принять">Принять</button>`);
+    if(d.status!=="open") b.push(`<button class="act act-reject" data-workact="open|Вернуть в работу">Вернуть в работу</button>`);
+  }
+  return b.length?`<div class="wc-acts">${b.join("")}</div>`:"";
+}
+function renderWorkBody(d){
+  const s=STATUS[d.status];
+  return `<div class="sheet-h"><h3>Карточка работы</h3><button class="sx" data-workclose="1" aria-label="Закрыть">×</button></div>
+    <div class="wc-top"><span class="elem-tag">${esc(d.elem)}</span><span class="badge ${s.badge}">${s.label}</span></div>
+    ${workPhotoBlock(d)}
+    <div class="wc-remark">${esc(d.remark)}</div>
+    <dl class="wc-grid">
+      <dt>Этаж / Блок</dt><dd>${esc(String(d.floor))} · ${esc(d.block)}</dd>
+      <dt>Помещение</dt><dd>${esc(String(d.room))}</dd>
+      <dt>Организация</dt><dd>${esc(d.org||"—")}</dd>
+      <dt>Элемент</dt><dd>${esc(d.elem)}</dd>
+      <dt>Срок</dt><dd>${esc(d.deadline||"—")}</dd>
+      <dt>Внёс</dt><dd>${esc(d.by||"—")} · ${esc(d.added)}</dd>
+    </dl>
+    ${workActions(d)}`;
+}
+function openWork(id){
+  const d=DATA.find(x=>x.id===id); if(!d)return;
+  curWorkId=id;
+  workBody.innerHTML=renderWorkBody(d);
+  workBody.scrollTop=0;
+  workSheet.classList.add("on");
+  observeThumbs();
+}
+function closeWork(){workSheet.classList.remove("on");curWorkId=null;}
+function refreshWork(){
+  if(workSheet.classList.contains("on")&&curWorkId!=null){
+    const d=DATA.find(x=>x.id===curWorkId);
+    if(d){workBody.innerHTML=renderWorkBody(d);observeThumbs();}
+  }
+}
+workSheet.addEventListener("click",e=>{
+  if(e.target===workSheet){closeWork();return;}
+  if(e.target.closest("[data-workclose]")){closeWork();return;}
+  const dph=e.target.closest("[data-donephoto]");if(dph){openDonePhoto(dph.dataset.donephoto);return;}
+  const ph=e.target.closest("[data-photo]");if(ph){openPhoto(ph.dataset.photo);return;}
+  if(e.target.closest("[data-workedit]")){openEdit(curWorkId);return;}
+  if(e.target.closest("[data-workcomplete]")){openCompletion(curWorkId,"Отметить выполнение");return;}
+  const ac=e.target.closest("[data-workact]");if(ac){const[to,label]=ac.dataset.workact.split("|");applyAction(curWorkId,to,label);return;}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&workSheet.classList.contains("on"))closeWork();});
 
 /* ===================== СТАРТ ===================== */
 renderGroupChips();
