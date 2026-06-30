@@ -7,13 +7,20 @@
 <title>Монитор замечаний · Школа</title>
 <style>
   :root{
-    --bg:#EEF1F4; --surface:#FFFFFF; --ink:#172230; --muted:#6B7888;
-    --line:#E2E7ED; --line-strong:#CBD3DC;
-    --amber:#F2A20C; --amber-soft:#FCEFD2; --amber-ink:#8a5a00;
-    --blue:#2F6FE4; --blue-soft:#E4EDFC;
-    --green:#1F9D57; --green-soft:#DCF3E6;
-    --grey:#8A97A6; --grey-soft:#EAEEF2;
-    --burgundy:#A23B52; --burgundy-soft:#F6E1E5; --burgundy-ink:#8E2F43;
+    /* === Фирменная палитра «Брусника» (свотчи слайда 3; заливки статусов — слайд 21) === */
+    --bg:#EFEFEF; --surface:#FFFFFF; --ink:#37465B; --muted:#616B7A;
+    --line:#D7DADE; --line-strong:#B0B5BD;
+    /* бренд-акцент (логотип, бейдж уровня): коралл-сигнал */
+    --amber:#EF3B24; --amber-soft:#FCD8D4; --amber-ink:#C5331E;
+    /* статус «На проверке» (check): нейтральный slate */
+    --blue:#616B7A; --blue-soft:#D7DADE;
+    /* статус «Принято» (done): фирменный лайм */
+    --green:#6BA12A; --green-soft:#E8F2D6;
+    --grey:#88909B; --grey-soft:#EFEFEF;
+    /* статус «Не устранено» (open): коралл + фирменная заливка */
+    --burgundy:#EF3B24; --burgundy-soft:#FCD8D4; --burgundy-ink:#C5331E;
+    /* берри — решающие действия (вход, «Принять», плашка роли «Брусника») */
+    --berry:#8C123C; --berry-soft:#E8CFD9;
     --shadow:0 1px 2px rgba(23,34,48,.06),0 4px 16px rgba(23,34,48,.05);
     --tap:44px;
   }
@@ -25,15 +32,15 @@
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
   /* ---------- Login ---------- */
-  .login{position:fixed;inset:0;z-index:100;background:#1b2734;display:none;align-items:center;justify-content:center;padding:20px}
+  .login{position:fixed;inset:0;z-index:100;background:#2A3340;display:none;align-items:center;justify-content:center;padding:20px}
   .login.on{display:flex}
   .login-card{background:var(--surface);border-radius:16px;padding:28px 24px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center}
-  .login-card .logo{width:48px;height:48px;border-radius:12px;margin:0 auto 14px;background:linear-gradient(135deg,var(--amber),#d98a00);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px}
+  .login-card .logo{width:48px;height:48px;border-radius:12px;margin:0 auto 14px;background:linear-gradient(135deg,var(--amber),#C5331E);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px}
   .login-card h2{margin:0 0 4px;font-size:18px}
   .login-card p{margin:0 0 16px;color:var(--muted);font-size:13px}
   .login-card input{width:100%;font-family:inherit;font-size:16px;padding:13px;border:1px solid var(--line-strong);border-radius:10px;text-align:center;letter-spacing:3px}
   .login-card input:focus{outline:2px solid var(--blue);outline-offset:1px}
-  .login-card .primary{width:100%;margin-top:10px;font-family:inherit;font-size:16px;font-weight:600;background:var(--ink);color:#fff;border:0;border-radius:10px;padding:14px;cursor:pointer}
+  .login-card .primary{width:100%;margin-top:10px;font-family:inherit;font-size:16px;font-weight:600;background:var(--berry);color:#fff;border:0;border-radius:10px;padding:14px;cursor:pointer}
   .login-card .primary[disabled]{opacity:.55;cursor:default}
   .login-card .skip{width:100%;margin-top:8px;background:none;border:0;color:var(--muted);font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:6px}
   .login-err{color:#c0392b;font-size:13px;min-height:18px;margin-top:8px}
@@ -43,7 +50,7 @@
   /* сплошная подложка под зоной выреза/статус-бара, чтобы список не просвечивал сверху */
   header::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:env(safe-area-inset-top);background:var(--surface)}
   .head-top{display:flex;align-items:center;gap:11px;padding:11px 14px}
-  .logo{width:32px;height:32px;border-radius:9px;flex:0 0 auto;background:linear-gradient(135deg,var(--amber),#d98a00);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
+  .logo{width:32px;height:32px;border-radius:9px;flex:0 0 auto;background:linear-gradient(135deg,var(--amber),#C5331E);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
   .title h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.2px}
   .title p{margin:0;font-size:11.5px;color:var(--muted)}
   .head-top .spacer{flex:1}
@@ -52,9 +59,9 @@
   .refresh-btn.spin svg{animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .role-badge{display:flex;align-items:center;gap:7px}
-  .role-pill{font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;background:var(--amber-soft);color:var(--amber-ink);white-space:nowrap}
-  .role-pill.observer{background:var(--grey-soft);color:#566472}
-  .role-pill.contractor{background:var(--blue-soft);color:#1d4fb0}
+  .role-pill{font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;background:var(--berry-soft);color:var(--berry);white-space:nowrap}
+  .role-pill.observer{background:var(--grey-soft);color:#616B7A}
+  .role-pill.contractor{background:var(--blue-soft);color:#37465B}
   .change-role{font-size:12px;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline;padding:6px 2px}
   button:focus-visible,select:focus,input:focus{outline:2px solid var(--blue);outline-offset:1px}
 
@@ -106,9 +113,9 @@
 
   .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap}
   .b-open{background:var(--burgundy-soft);color:var(--burgundy-ink)}
-  .b-check{background:var(--blue-soft);color:#1d4fb0}
-  .b-done{background:var(--green-soft);color:#137a41}
-  .elem-tag{font-size:11px;font-weight:600;color:var(--amber-ink);background:var(--amber-soft);padding:2px 8px;border-radius:6px}
+  .b-check{background:var(--blue-soft);color:#37465B}
+  .b-done{background:var(--green-soft);color:#5E8C16}
+  .elem-tag{font-size:11px;font-weight:600;color:#37465B;background:var(--blue-soft);padding:2px 8px;border-radius:6px}
   .meta{font-size:12px;color:var(--muted)}
   .meta b{color:var(--ink);font-weight:600}
   .thumb{border-radius:8px;background:var(--grey-soft);object-fit:cover;cursor:pointer;flex:0 0 auto;border:1px solid var(--line);display:block}
@@ -117,9 +124,9 @@
   @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
   .act{font-family:inherit;font-size:13px;font-weight:600;border-radius:9px;padding:9px 13px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:40px}
   .act[disabled]{opacity:.5;cursor:default}
-  .act-done{background:var(--green);color:#fff}
-  .act-accept{background:var(--blue);color:#fff}
-  .act-reject{background:var(--surface);color:#b13b3b;border-color:#e7c3c3}
+  .act-done{background:#37465B;color:#fff}
+  .act-accept{background:var(--berry);color:#fff}
+  .act-reject{background:var(--surface);color:#C5331E;border-color:#F9B2A4}
   .locked{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;font-style:italic}
 
   .v-list .item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:7px;box-shadow:var(--shadow)}
@@ -166,7 +173,7 @@
 
   .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:90;max-width:90vw;text-align:center}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-  .toast.err{background:#b13b3b}
+  .toast.err{background:#C5331E}
 
   /* ---------- MOBILE ---------- */
   @media(max-width:640px){
