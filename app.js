@@ -140,7 +140,7 @@ function actionsFor(it){
   }
   return out;
 }
-async function applyAction(id,to,label,photoBase64,photoMime){
+async function applyAction(id,to,label,photoBase64,photoMime,silentSuccess){
   const it=DATA.find(d=>d.id===id);if(!it)return;
   const prev=it.status;
   it.status=to;render();                          // оптимистично
@@ -151,7 +151,7 @@ async function applyAction(id,to,label,photoBase64,photoMime){
     if(res.ok && res.remark){
       Object.assign(it,res.remark);               // берём правду с сервера
       render();refreshWork();
-      toast(label+" · "+STATUS[to].label);
+      if(!silentSuccess) toast(label+" · "+STATUS[to].label);
     }else{
       it.status=prev;render();                     // откат
       if(res.error==="CONFLICT"){
@@ -403,7 +403,7 @@ document.getElementById("refreshBtn").onclick=()=>loadData(true);
 
 /* ===================== УТИЛИТЫ ===================== */
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));}
-let toastT;function toast(msg,isErr){const t=document.getElementById("toast");t.textContent=msg;t.className="toast on"+(isErr?" err":"");clearTimeout(toastT);toastT=setTimeout(()=>t.className="toast",2200);}
+let toastT;function toast(msg,isErr,ms){const t=document.getElementById("toast");t.textContent=msg;t.className="toast on"+(isErr?" err":"");clearTimeout(toastT);toastT=setTimeout(()=>t.className="toast",ms||2200);}
 
 /* ===================== АВТОСКРЫТИЕ ШАПКИ (только телефон) ===================== */
 (function(){
@@ -494,12 +494,13 @@ document.getElementById("donePvDel").onclick=()=>{doneCtx.photo=null;doneFile.va
 document.getElementById("doneClose").onclick=closeCompletion;
 document.getElementById("doneCancel").onclick=closeCompletion;
 doneSheet.onclick=e=>{if(e.target===doneSheet)closeCompletion();};
-doneConfirm.onclick=async()=>{
+doneConfirm.onclick=()=>{
   if(!doneCtx.photo)return;
-  doneConfirm.disabled=true;doneConfirm.textContent="Отправка…";
   const {id,label,photo}=doneCtx;
   closeCompletion();
-  await applyAction(id,"check",label,photo.base64,photo.mime);
+  closeWork();                                          // карточка тоже закрывается сразу
+  toast(label+" · "+STATUS.check.label, false, 3000);    // показываем сразу, не дожидаясь ответа сервера
+  applyAction(id,"check",label,photo.base64,photo.mime,true);  // сохранение (с фото) идёт в фоне
 };
 
 /* ===================== ЛИСТ «РЕДАКТИРОВАТЬ» (Брусника) ===================== */
@@ -593,7 +594,15 @@ workSheet.addEventListener("click",e=>{
   const ph=e.target.closest("[data-photo]");if(ph){openPhoto(ph.dataset.photo);return;}
   if(e.target.closest("[data-workedit]")){openEdit(curWorkId);return;}
   if(e.target.closest("[data-workcomplete]")){openCompletion(curWorkId,"Отметить выполнение");return;}
-  const ac=e.target.closest("[data-workact]");if(ac){const[to,label]=ac.dataset.workact.split("|");applyAction(curWorkId,to,label);return;}
+  const ac=e.target.closest("[data-workact]");
+  if(ac){
+    const[to,label]=ac.dataset.workact.split("|");
+    const id=curWorkId;                 // запоминаем ДО закрытия — closeWork() обнуляет curWorkId
+    closeWork();
+    toast(label+" · "+STATUS[to].label, false, 3000);   // показываем сразу, не дожидаясь ответа сервера
+    applyAction(id,to,label,undefined,undefined,true);  // сохранение идёт в фоне (silentSuccess=true)
+    return;
+  }
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&workSheet.classList.contains("on"))closeWork();});
 
