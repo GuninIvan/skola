@@ -460,8 +460,8 @@ async function applyAction(id,to,label){
 
 /* ===================== ФОТО ===================== */
 const photoCache=new Map();    // remarkId -> dataUrl (для прокси/лайтбокса)
-function thumbURL(fileId){ return "https://drive.google.com/thumbnail?id="+fileId+"&sz=w400"; }
-function fullURL(fileId){ return "https://drive.google.com/thumbnail?id="+fileId+"&sz=w1600"; }
+function thumbURL(fileId){ return "https://lh3.googleusercontent.com/d/"+fileId+"=w400"; }
+function fullURL(fileId){ return "https://lh3.googleusercontent.com/d/"+fileId+"=w1600"; }
 
 // IntersectionObserver — грузим миниатюры лениво
 const imgObserver=("IntersectionObserver" in window)?new IntersectionObserver((entries)=>{
