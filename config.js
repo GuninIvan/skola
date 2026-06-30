@@ -17,5 +17,5 @@ window.CONFIG = {
   // true  — фото грузятся через прокси Apps Script (надёжно, но медленнее);
   // false — прямой Drive-thumbnail (быстро; требует доступ к файлам «по ссылке»),
   //         при ошибке автоматически падает на прокси.
-  PHOTO_VIA_PROXY: false
+  PHOTO_VIA_PROXY: true
 };
