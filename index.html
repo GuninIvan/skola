@@ -202,6 +202,47 @@
     .v-big .big-foot>div{width:100%;display:flex;gap:8px}
     .v-big .big-foot .act{flex:1}
   }
+
+  /* ---------- Фото исправления + редактирование ---------- */
+  .act-edit{background:var(--surface);color:var(--berry);border-color:var(--berry-soft)}
+  .act-edit:hover{background:var(--berry-soft)}
+  .sheet{position:fixed;inset:0;z-index:85;background:rgba(10,16,24,.55);display:none;align-items:flex-end;justify-content:center}
+  .sheet.on{display:flex}
+  .sheet-card{background:var(--surface);width:100%;max-width:440px;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;box-shadow:0 -8px 40px rgba(0,0,0,.25)}
+  @media(min-width:520px){.sheet{align-items:center;padding:16px}.sheet-card{border-radius:16px}}
+  .sheet-h{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .sheet-h h3{margin:0;font-size:16px;font-weight:700}
+  .sheet-h .sx{margin-left:auto;background:none;border:0;font-size:24px;color:var(--muted);cursor:pointer;line-height:1;padding:0 6px}
+  .sheet-sub{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.4}
+  .drop{border:1.5px dashed var(--line-strong);border-radius:11px;background:var(--surface);padding:20px 12px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover{border-color:var(--amber)}
+  .drop svg{color:var(--amber);margin-bottom:6px}
+  .drop .dt{font-size:14px;font-weight:600;margin:0 0 2px}
+  .drop .dh{font-size:12px;color:var(--muted);margin:0}
+  .pv{display:none;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:9px;margin-top:2px}
+  .pv.on{display:flex}
+  .pv img{width:60px;height:60px;border-radius:9px;object-fit:cover;flex:0 0 auto;background:var(--grey-soft)}
+  .pv-main{flex:1;min-width:0}
+  .pv-name{font-size:13px;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv-size{font-size:12px;color:var(--muted);margin:0}
+  .pv-size b{color:#5E8C16;font-weight:600}
+  .pv-x{background:var(--surface);border:1px solid var(--line-strong);color:var(--muted);width:34px;height:34px;border-radius:9px;cursor:pointer;flex:0 0 auto;font-size:18px}
+  .pv-x:hover{border-color:var(--burgundy);color:var(--burgundy)}
+  .fld{margin-bottom:11px}
+  .fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .fld input,.fld textarea{width:100%;font-family:inherit;font-size:16px;color:var(--ink);padding:10px 11px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface)}
+  .fld textarea{resize:vertical;min-height:64px;line-height:1.45}
+  .fld .fh{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sheet-acts{display:flex;gap:9px;margin-top:16px}
+  .sheet-acts .act{flex:1}
+  .sheet-acts .act-primary{background:var(--green);color:#fff}
+  .sheet-acts .act-save{background:var(--berry);color:#fff}
+  .sheet-acts .act-ghost{background:var(--surface);color:var(--muted);border-color:var(--line-strong)}
+  .big-photos{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--grey-soft)}
+  .big-photos .ph-wrap{position:relative;min-width:0}
+  .big-photos .big-photo{height:170px}
+  .ph-lab{position:absolute;left:7px;top:7px;font-size:10.5px;font-weight:600;color:#fff;background:rgba(23,34,48,.62);padding:2px 8px;border-radius:20px}
 </style>
 </head>
 <body>
@@ -285,6 +326,47 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="sheet" id="doneSheet">
+  <div class="sheet-card">
+    <div class="sheet-h"><h3>Отметить выполнение</h3><button class="sx" id="doneClose" aria-label="Закрыть">×</button></div>
+    <p class="sheet-sub">Приложите фото исправления — оно сохранится вместе с отметкой, замечание уйдёт на проверку.</p>
+    <div class="drop" id="doneDrop">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2z"/><circle cx="12" cy="13" r="3.2"/></svg>
+      <p class="dt">Снять или выбрать фото</p>
+      <p class="dh">JPG · сожмётся автоматически</p>
+    </div>
+    <div class="pv" id="donePv">
+      <img id="donePvImg" alt="Фото исправления">
+      <div class="pv-main"><p class="pv-name" id="donePvName">фото.jpg</p><p class="pv-size" id="donePvSize">—</p></div>
+      <button class="pv-x" id="donePvDel" aria-label="Удалить фото">×</button>
+    </div>
+    <input type="file" id="doneFile" accept="image/*" capture="environment" style="display:none">
+    <div class="sheet-acts">
+      <button class="act act-ghost" id="doneCancel">Отмена</button>
+      <button class="act act-primary" id="doneConfirm" disabled>Отметить выполнение</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="editSheet">
+  <div class="sheet-card">
+    <div class="sheet-h"><h3>Редактировать замечание</h3><button class="sx" id="editClose" aria-label="Закрыть">×</button></div>
+    <p class="sheet-sub">Изменения сохранятся в той же строке. Статус меняется кнопками «Принять» / «Вернуть в работу».</p>
+    <div class="frow">
+      <div class="fld"><label>Этаж</label><input id="eFloor" inputmode="numeric"></div>
+      <div class="fld"><label>Блок</label><input id="eBlock"></div>
+    </div>
+    <div class="fld"><label>Помещение</label><input id="eRoom"><p class="fh">Формат «этаж.блок.номер», напр. 5.2.14 — сохранится как текст.</p></div>
+    <div class="fld"><label>Ответственная организация</label><input id="eOrg"></div>
+    <div class="fld"><label>Конструктивный элемент</label><input id="eElem"></div>
+    <div class="fld"><label>Замечание</label><textarea id="eRemark"></textarea></div>
+    <div class="sheet-acts">
+      <button class="act act-ghost" id="editCancel">Отмена</button>
+      <button class="act act-save" id="editConfirm">Сохранить</button>
+    </div>
+  </div>
+</div>
 
 <script src="config.js"></script>
 <script>
@@ -430,12 +512,14 @@ function actionsFor(it){
   }
   return out;
 }
-async function applyAction(id,to,label){
+async function applyAction(id,to,label,photoBase64,photoMime){
   const it=DATA.find(d=>d.id===id);if(!it)return;
   const prev=it.status;
   it.status=to;render();                          // оптимистично
   try{
-    const res=await apiPost({action:"setStatus", id, status:to, sessionToken:state.sessionToken, expectedStatus:prev});
+    const payload={action:"setStatus", id, status:to, sessionToken:state.sessionToken, expectedStatus:prev};
+    if(photoBase64){ payload.photoBase64=photoBase64; payload.photoMime=photoMime||"image/jpeg"; }
+    const res=await apiPost(payload);
     if(res.ok && res.remark){
       Object.assign(it,res.remark);               // берём правду с сервера
       render();
@@ -508,6 +592,16 @@ async function openPhoto(id){
   const show=u=>{lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.onerror=tryProxy;lbImg.src=u;};
   const tryProxy=async()=>{const u=await proxyPhoto(id);if(u){lbImg.onerror=null;lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.src=u;}else{lbSpin.textContent="Фото недоступно";}};
   if(CONFIG.PHOTO_VIA_PROXY) tryProxy(); else show(fullURL(fileId));
+}
+function openDonePhoto(id){
+  const d=DATA.find(x=>x.id===id);
+  if(!d||!d.donePhoto||!d.donePhoto.available)return;
+  lbMeta.textContent=`Исправление · ${d.elem} · Блок ${d.block} · пом. ${d.room}`;
+  lbImg.style.display="none";lbSpin.style.display="block";lb.classList.add("on");
+  const fileId=d.donePhoto.fileId;
+  const tryProxy=async()=>{const u=await proxyPhoto(fileId);if(u){lbImg.onerror=null;lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.src=u;}else{lbSpin.textContent="Фото недоступно";}};
+  if(CONFIG.PHOTO_VIA_PROXY){tryProxy();}
+  else{lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.onerror=tryProxy;lbImg.src=fullURL(fileId);}
 }
 function closePhoto(){lb.classList.remove("on");lbImg.src="";lbSpin.textContent="Загрузка фото…";}
 document.getElementById("lbClose").onclick=closePhoto;
@@ -611,15 +705,29 @@ function thumbHTML(d,cls){
     return `<img class="thumb loading ${cls}" data-rid="${esc(d.id)}" data-fid="${esc(d.photo.fileId)}" data-photo="${esc(d.id)}" alt="Фото замечания">`;
   return `<div class="thumb ${cls} nophoto">нет<br>фото</div>`;
 }
+function nophotoBox(label){
+  return `<div class="big-photo nophoto"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l18 18M21 15V7a2 2 0 0 0-2-2h-8M3 7v12a2 2 0 0 0 2 2h12"/></svg><span>${label||"Фото нет"}</span></div>`;
+}
+function bigPhotos(d){
+  const has1=d.photo&&d.photo.available, has2=d.donePhoto&&d.donePhoto.available;
+  const before=has1
+    ?`<img class="big-photo loading" data-rid="${esc(d.id)}" data-fid="${esc(d.photo.fileId)}" data-photo="${esc(d.id)}" alt="Фото дефекта">`
+    :nophotoBox("Фото нет");
+  if(!has2) return before;                               // одно фото — как раньше
+  const after=`<img class="big-photo loading" data-rid="${esc(d.donePhoto.fileId)}" data-fid="${esc(d.donePhoto.fileId)}" data-donephoto="${esc(d.id)}" alt="Фото исправления">`;
+  return `<div class="big-photos"><div class="ph-wrap"><span class="ph-lab">Было</span>${before}</div><div class="ph-wrap"><span class="ph-lab">Стало</span>${after}</div></div>`;
+}
 function statusBadge(d){const s=STATUS[d.status];return `<span class="badge ${s.badge}">${s.label}</span>`;}
 function actBtns(d){
   const acts=actionsFor(d);
-  if(!acts.length){
+  const editBtn=(state.role==="brusnika")
+    ? `<button class="act act-edit" data-edit="${esc(d.id)}">✎ Изменить</button>` : "";
+  if(!acts.length && !editBtn){
     if(d.status==="done")return `<span class="locked">✓ принято</span>`;
     if(state.role==="observer")return `<span class="locked">🔒 просмотр</span>`;
     return `<span class="locked">—</span>`;
   }
-  return acts.map(a=>`<button class="act ${a.cls}" data-act="${esc(d.id)}|${a.to}|${esc(a.label)}">${esc(a.label)}</button>`).join("");
+  return editBtn + acts.map(a=>`<button class="act ${a.cls}" data-act="${esc(d.id)}|${a.to}|${esc(a.label)}">${esc(a.label)}</button>`).join("");
 }
 function renderItem(d){
   if(state.view==="list"){
@@ -628,9 +736,7 @@ function renderItem(d){
   if(state.view==="cards"){
     return `<div class="item"><div class="c-top">${thumbHTML(d,"")}<div class="c-body"><div class="c-tags"><span class="elem-tag">${esc(d.elem)}</span>${statusBadge(d)}</div><div class="c-remark">${esc(d.remark)}</div><div class="meta">Блок <b>${esc(d.block)}</b> · пом. <b>${esc(String(d.room))}</b>${d.org?" · "+esc(d.org):""}</div></div></div><div class="c-foot"><span class="meta">${esc(d.by||"—")} · ${esc(d.added)}</span><div>${actBtns(d)}</div></div></div>`;
   }
-  const photo=(d.photo&&d.photo.available)
-    ?`<img class="big-photo loading" data-rid="${esc(d.id)}" data-fid="${esc(d.photo.fileId)}" data-photo="${esc(d.id)}" alt="Фото замечания">`
-    :`<div class="big-photo nophoto"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l18 18M21 15V7a2 2 0 0 0-2-2h-8M3 7v12a2 2 0 0 0 2 2h12"/></svg><span>Фото нет</span></div>`;
+  const photo=bigPhotos(d);
   return `<div class="item">${photo}<div class="big-body"><div class="big-tags"><span class="elem-tag">${esc(d.elem)}</span>${statusBadge(d)}</div><div class="big-remark">${esc(d.remark)}</div><dl class="big-grid"><dt>Этаж / Блок</dt><dd>${esc(String(d.floor))} · ${esc(d.block)}</dd><dt>Помещение</dt><dd>${esc(String(d.room))}</dd><dt>Организация</dt><dd>${esc(d.org||"—")}</dd><dt>Внёс</dt><dd>${esc(d.by||"—")} · ${esc(d.added)}</dd></dl><div class="big-foot"><div>${actBtns(d)}</div></div></div></div>`;
 }
 
@@ -656,8 +762,12 @@ groupBar.addEventListener("click",e=>{
 
 /* ===================== СОБЫТИЯ СПИСКА ===================== */
 app.addEventListener("click",e=>{
+  const dph=e.target.closest("[data-donephoto]");if(dph&&!dph.classList.contains("nophoto")){openDonePhoto(dph.dataset.donephoto);return;}
   const ph=e.target.closest("[data-photo]");if(ph&&!ph.classList.contains("nophoto")){openPhoto(ph.dataset.photo);return;}
-  const act=e.target.closest("[data-act]");if(act){const[id,to,label]=act.dataset.act.split("|");applyAction(id,to,label);return;}
+  const ed=e.target.closest("[data-edit]");if(ed){openEdit(ed.dataset.edit);return;}
+  const act=e.target.closest("[data-act]");if(act){const[id,to,label]=act.dataset.act.split("|");
+    if(to==="check"&&state.role==="contractor"){openCompletion(id,label);return;}
+    applyAction(id,to,label);return;}
   const gh=e.target.closest(".group-head");if(gh){const k=gh.dataset.key;state.collapsed.has(k)?state.collapsed.delete(k):state.collapsed.add(k);render();}
 });
 document.getElementById("searchInp").oninput=e=>{state.search=e.target.value;render();};
@@ -709,6 +819,96 @@ let toastT;function toast(msg,isErr){const t=document.getElementById("toast");t.
     dist=0;
   });
 })();
+
+/* ===================== СЖАТИЕ ФОТО ===================== */
+function compressImage(file, maxSide=1280, quality=0.7){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>h&&w>maxSide){h=Math.round(h*maxSide/w);w=maxSide;}
+      else if(h>=w&&h>maxSide){w=Math.round(w*maxSide/h);h=maxSide;}
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      const dataUrl=c.toDataURL("image/jpeg",quality);
+      URL.revokeObjectURL(url);
+      const base64=dataUrl.split(",")[1];
+      resolve({dataUrl,base64,mime:"image/jpeg",origSize:file.size,compSize:Math.round(base64.length*3/4)});
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("bad image"));};
+    img.src=url;
+  });
+}
+function fmtSize(b){return b<1024?b+" Б":b<1048576?Math.round(b/1024)+" КБ":(b/1048576).toFixed(1)+" МБ";}
+
+/* ===================== ЛИСТ «ОТМЕТИТЬ ВЫПОЛНЕНИЕ» ===================== */
+const doneSheet=document.getElementById("doneSheet"),doneDrop=document.getElementById("doneDrop"),
+  doneFile=document.getElementById("doneFile"),donePv=document.getElementById("donePv"),
+  donePvImg=document.getElementById("donePvImg"),donePvName=document.getElementById("donePvName"),
+  donePvSize=document.getElementById("donePvSize"),doneConfirm=document.getElementById("doneConfirm");
+let doneCtx={id:null,label:"",photo:null};
+function openCompletion(id,label){
+  doneCtx={id,label:label||"Отметить выполнение",photo:null};
+  donePv.classList.remove("on");doneDrop.style.display="block";doneFile.value="";
+  doneConfirm.disabled=true;doneConfirm.textContent="Отметить выполнение";
+  doneSheet.classList.add("on");
+}
+function closeCompletion(){doneSheet.classList.remove("on");}
+doneDrop.onclick=()=>doneFile.click();
+doneFile.onchange=async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  try{
+    const r=await compressImage(f);
+    doneCtx.photo=r;
+    donePvImg.src=r.dataUrl;donePvName.textContent=f.name;
+    donePvSize.innerHTML=`${fmtSize(r.origSize)} → <b>${fmtSize(r.compSize)}</b>`;
+    doneDrop.style.display="none";donePv.classList.add("on");doneConfirm.disabled=false;
+  }catch(_){toast("Не удалось обработать фото",true);}
+};
+document.getElementById("donePvDel").onclick=()=>{doneCtx.photo=null;doneFile.value="";donePv.classList.remove("on");doneDrop.style.display="block";doneConfirm.disabled=true;};
+document.getElementById("doneClose").onclick=closeCompletion;
+document.getElementById("doneCancel").onclick=closeCompletion;
+doneSheet.onclick=e=>{if(e.target===doneSheet)closeCompletion();};
+doneConfirm.onclick=async()=>{
+  if(!doneCtx.photo)return;
+  doneConfirm.disabled=true;doneConfirm.textContent="Отправка…";
+  const {id,label,photo}=doneCtx;
+  closeCompletion();
+  await applyAction(id,"check",label,photo.base64,photo.mime);
+};
+
+/* ===================== ЛИСТ «РЕДАКТИРОВАТЬ» (Брусника) ===================== */
+const editSheet=document.getElementById("editSheet"),editConfirm=document.getElementById("editConfirm");
+const eF={floor:document.getElementById("eFloor"),block:document.getElementById("eBlock"),
+  room:document.getElementById("eRoom"),org:document.getElementById("eOrg"),
+  elem:document.getElementById("eElem"),remark:document.getElementById("eRemark")};
+let editId=null;
+function openEdit(id){
+  if(state.role!=="brusnika"){toast("Редактировать может только «Брусника»",true);return;}
+  const d=DATA.find(x=>x.id===id);if(!d)return;
+  editId=id;
+  eF.floor.value=(d.floor??"");eF.block.value=(d.block||"");eF.room.value=(d.room||"");
+  eF.org.value=(d.org||"");eF.elem.value=(d.elem||"");eF.remark.value=(d.remark||"");
+  editConfirm.disabled=false;editConfirm.textContent="Сохранить";
+  editSheet.classList.add("on");
+}
+function closeEdit(){editSheet.classList.remove("on");editId=null;}
+document.getElementById("editClose").onclick=closeEdit;
+document.getElementById("editCancel").onclick=closeEdit;
+editSheet.onclick=e=>{if(e.target===editSheet)closeEdit();};
+editConfirm.onclick=async()=>{
+  if(!editId)return;
+  const it=DATA.find(x=>x.id===editId);if(!it)return;
+  editConfirm.disabled=true;editConfirm.textContent="Сохранение…";
+  try{
+    const res=await apiPost({action:"editRemark", id:editId, sessionToken:state.sessionToken,
+      floor:eF.floor.value.trim(), block:eF.block.value.trim(), room:eF.room.value.trim(),
+      org:eF.org.value.trim(), elem:eF.elem.value.trim(), remark:eF.remark.value.trim()});
+    if(res.ok&&res.remark){Object.assign(it,res.remark);render();closeEdit();toast("Изменения сохранены");}
+    else if(res.error==="AUTH"){toast("Сессия истекла, войдите заново",true);state.sessionToken=null;setRole("observer");closeEdit();}
+    else{editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast(res.message||"Не удалось сохранить",true);}
+  }catch(_){editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast("Ошибка сети при сохранении",true);}
+};
 
 /* ===================== СТАРТ ===================== */
 renderGroupChips();
