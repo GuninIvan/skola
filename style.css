@@ -68,6 +68,8 @@
   .view-switch button span{display:inline}
   .filters-toggle{display:none;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:9px 13px;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;min-height:var(--tap)}
   .filters-toggle .fcount{font-size:11px;background:var(--ink);color:#fff;border-radius:20px;padding:1px 7px}
+  .filters-toggle.has-filters{border-color:var(--ink)}
+  .filters-toggle.has-filters::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);flex:0 0 auto}
 
   .group-bar{display:flex;align-items:center;gap:8px;padding:6px 14px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
   .gb-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
@@ -84,6 +86,36 @@
   .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
   .dot.open{background:var(--burgundy)} .dot.check{background:var(--blue)} .dot.done{background:var(--green)}
   .role-note{font-size:12px;color:var(--muted);padding:3px 14px 9px}
+
+  /* ---------- Фильтры по столбцам ---------- */
+  .filter-bar{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .fb-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .filter-dd{position:relative}
+  .fdd-btn{font-family:inherit;font-size:13px;padding:8px 11px;border-radius:20px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;min-height:38px;transition:.12s}
+  .fdd-btn:hover{border-color:var(--muted)}
+  .filter-dd.on .fdd-btn{border-color:var(--ink);background:var(--grey-soft)}
+  .fdd-badge{font-size:10.5px;font-weight:700;background:var(--ink);color:#fff;border-radius:20px;padding:1px 6px;line-height:1.5}
+  .fdd-badge:empty{display:none}
+  .fcaret{transition:transform .15s;color:var(--muted);flex:0 0 auto}
+  .filter-dd.open .fcaret{transform:rotate(180deg)}
+  .filter-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;width:264px;max-width:calc(100vw - 28px);background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 10px 34px rgba(23,34,48,.16);display:none;overflow:hidden}
+  .filter-dd.open .filter-pop{display:block}
+  .filter-dd.pop-right .filter-pop{left:auto;right:0}
+  .fpop-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid var(--line);background:var(--surface)}
+  .fpop-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fpop-acts{display:flex;gap:5px;flex:0 0 auto}
+  .fpop-acts button{font-family:inherit;font-size:11.5px;color:var(--ink);background:var(--grey-soft);border:1px solid var(--line);border-radius:7px;padding:4px 8px;cursor:pointer}
+  .fpop-acts button:hover{border-color:var(--muted)}
+  .fpop-list{max-height:min(46vh,304px);overflow:auto;padding:4px;overscroll-behavior:contain}
+  .fopt{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13px;min-height:38px}
+  .fopt:hover{background:var(--grey-soft)}
+  .fopt input{width:17px;height:17px;flex:0 0 auto;margin:0;accent-color:var(--ink);cursor:pointer}
+  .fopt-txt{flex:1;min-width:0;word-break:break-word;line-height:1.3}
+  .fopt-c{font-size:11px;color:var(--muted);flex:0 0 auto}
+  .fpop-empty{padding:12px;text-align:center;color:var(--muted);font-size:12px}
+  .fb-clear{font-family:inherit;font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line-strong);border-radius:20px;padding:7px 12px;cursor:pointer;min-height:38px;display:inline-flex;align-items:center;gap:5px}
+  .fb-clear:hover{border-color:var(--muted);color:var(--ink)}
+  .fb-clear .fbx{font-size:12px;line-height:1}
 
   /* pull-to-refresh */
   .ptr{position:fixed;top:env(safe-area-inset-top);left:0;right:0;display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;color:var(--muted);font-size:12px;z-index:20;pointer-events:none;transition:height .15s}
@@ -181,6 +213,8 @@
     .filters{display:none}
     .filters.open{display:block;border-top:1px solid var(--line)}
     .group-bar,.stats{border-top:0}
+    .filter-bar{gap:7px;padding-bottom:12px}
+    .fpop-list{max-height:42vh}
     .group:not(.lvl1){margin-left:7px;padding-left:9px}
     .group-head h2{font-size:12.5px}
     .v-list .item{flex-wrap:wrap;align-items:flex-start}
