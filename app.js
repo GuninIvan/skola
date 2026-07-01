@@ -13,6 +13,7 @@ const ROLES = {
 const GROUP_FIELDS = [
   {k:"floor",label:"Этаж"},{k:"block",label:"Блок"},{k:"room",label:"Помещение"},
   {k:"org",label:"Организация"},{k:"elem",label:"Элемент"},{k:"remark",label:"Замечание"},
+  {k:"deadline",label:"Срок устранения"},{k:"added",label:"Дата внесения"},{k:"by",label:"Кем внесено"},
 ];
 const MAX_LEVELS = 6;
 
@@ -247,7 +248,8 @@ function groupLabel(d,key){
     case "remark":return d.remark||"—";
     case "status":return STATUS[d.status].label;
     case "by":return d.by||"— не указано";
-    case "added":return d.added||"—";
+    case "added":return d.added||"— без даты";
+    case "deadline":return d.deadline||"— без срока";
   }
 }
 function filtered(){
@@ -261,7 +263,27 @@ function filtered(){
 function groupBy(items,key){
   const m=new Map();
   items.forEach(d=>{const k=groupLabel(d,key);(m.get(k)||m.set(k,[]).get(k)).push(d);});
-  return new Map([...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ru',{numeric:true})));
+  const entries=[...m.entries()];
+  if(key==="added"||key==="deadline"){
+    // даты — от раннего к позднему; группы без даты уводим в конец
+    entries.sort((a,b)=>{
+      const ta=ruDateVal(a[0]), tb=ruDateVal(b[0]);
+      if(ta==null&&tb==null) return a[0].localeCompare(b[0],'ru',{numeric:true});
+      if(ta==null) return 1;
+      if(tb==null) return -1;
+      return ta-tb;
+    });
+  }else{
+    entries.sort((a,b)=>a[0].localeCompare(b[0],'ru',{numeric:true}));
+  }
+  return new Map(entries);
+}
+// «дд.мм.гггг» → сравнимое число (мс от эпохи); не дата → null
+function ruDateVal(s){
+  const m=/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/.exec(String(s||'').trim());
+  if(!m) return null;
+  let y=+m[3]; if(y<100) y+=2000;
+  return new Date(y, (+m[2])-1, +m[1]).getTime();
 }
 
 const app=document.getElementById("app");
@@ -507,14 +529,23 @@ doneConfirm.onclick=()=>{
 const editSheet=document.getElementById("editSheet"),editConfirm=document.getElementById("editConfirm");
 const eF={floor:document.getElementById("eFloor"),block:document.getElementById("eBlock"),
   room:document.getElementById("eRoom"),org:document.getElementById("eOrg"),
-  elem:document.getElementById("eElem"),remark:document.getElementById("eRemark")};
+  elem:document.getElementById("eElem"),remark:document.getElementById("eRemark"),
+  deadline:document.getElementById("eDeadline")};
 let editId=null;
+// «дд.мм.гггг» → «гггг-мм-дд» для <input type="date">; иначе пусто
+function ruToISO(s){
+  const m=/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/.exec(String(s||'').trim());
+  if(!m) return "";
+  let y=m[3]; if(y.length===2) y="20"+y;
+  return y+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[1]).slice(-2);
+}
 function openEdit(id){
   if(state.role!=="brusnika"){toast("Редактировать может только «Брусника»",true);return;}
   const d=DATA.find(x=>x.id===id);if(!d)return;
   editId=id;
   eF.floor.value=(d.floor??"");eF.block.value=(d.block||"");eF.room.value=(d.room||"");
   eF.org.value=(d.org||"");eF.elem.value=(d.elem||"");eF.remark.value=(d.remark||"");
+  eF.deadline.value=ruToISO(d.deadline);
   editConfirm.disabled=false;editConfirm.textContent="Сохранить";
   editSheet.classList.add("on");
 }
@@ -529,7 +560,8 @@ editConfirm.onclick=async()=>{
   try{
     const res=await apiPost({action:"editRemark", id:editId, sessionToken:state.sessionToken,
       floor:eF.floor.value.trim(), block:eF.block.value.trim(), room:eF.room.value.trim(),
-      org:eF.org.value.trim(), elem:eF.elem.value.trim(), remark:eF.remark.value.trim()});
+      org:eF.org.value.trim(), elem:eF.elem.value.trim(), remark:eF.remark.value.trim(),
+      deadline:eF.deadline.value});   // <input type="date"> → «гггг-мм-дд» или пусто
     if(res.ok&&res.remark){Object.assign(it,res.remark);render();refreshWork();closeEdit();toast("Изменения сохранены");}
     else if(res.error==="AUTH"){toast("Сессия истекла, войдите заново",true);state.sessionToken=null;setRole("observer");closeEdit();}
     else{editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast(res.message||"Не удалось сохранить",true);}
