@@ -88,7 +88,7 @@
   .role-note{font-size:12px;color:var(--muted);padding:3px 14px 9px}
 
   /* ---------- Фильтры по столбцам ---------- */
-  .filter-bar{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .filter-bar{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--line);flex-wrap:wrap;position:relative}
   .fb-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
   .filter-dd{position:relative}
   .fdd-btn{font-family:inherit;font-size:13px;padding:8px 11px;border-radius:20px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;min-height:38px;transition:.12s}
@@ -106,6 +106,7 @@
   .fpop-acts{display:flex;gap:5px;flex:0 0 auto}
   .fpop-acts button{font-family:inherit;font-size:11.5px;color:var(--ink);background:var(--grey-soft);border:1px solid var(--line);border-radius:7px;padding:4px 8px;cursor:pointer}
   .fpop-acts button:hover{border-color:var(--muted)}
+  .fpop-close{display:none;font-size:14px;line-height:1;padding:4px 8px;color:var(--muted)}
   .fpop-list{max-height:min(46vh,304px);overflow:auto;padding:4px;overscroll-behavior:contain}
   .fopt{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13px;min-height:38px}
   .fopt:hover{background:var(--grey-soft)}
@@ -214,7 +215,13 @@
     .filters.open{display:block;border-top:1px solid var(--line)}
     .group-bar,.stats{border-top:0}
     .filter-bar{gap:7px;padding-bottom:12px}
-    .fpop-list{max-height:42vh}
+    /* На телефоне выпадающая панель — во всю ширину под рядом фильтров (якорь — .filter-bar),
+       не привязана к кнопке, поэтому не уезжает за край и не перекрывает соседние кнопки */
+    .filter-dd{position:static}
+    .filter-pop{position:absolute;left:0;right:0;top:calc(100% + 6px);width:auto;max-width:none;z-index:50;box-shadow:0 14px 38px rgba(23,34,48,.22)}
+    .filter-dd.pop-right .filter-pop{left:0;right:0}
+    .fpop-list{max-height:48vh}
+    .fpop-close{display:inline-flex;align-items:center;justify-content:center}
     .group:not(.lvl1){margin-left:7px;padding-left:9px}
     .group-head h2{font-size:12.5px}
     .v-list .item{flex-wrap:wrap;align-items:flex-start}

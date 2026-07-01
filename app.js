@@ -468,7 +468,7 @@ function renderFilterBar(){
         `<button type="button" class="fdd-btn">${esc(f.label)}<span class="fdd-badge">${active?sel+"/"+total:""}</span>`+
           `<svg class="fcaret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>`+
         `<div class="filter-pop">`+
-          `<div class="fpop-head"><span class="fpop-title">${esc(f.label)}</span><span class="fpop-acts"><button type="button" data-fall>Все</button><button type="button" data-fnone>Снять</button></span></div>`+
+          `<div class="fpop-head"><span class="fpop-title">${esc(f.label)}</span><span class="fpop-acts"><button type="button" data-fall>Все</button><button type="button" data-fnone>Снять</button><button type="button" class="fpop-close" data-fclose aria-label="Закрыть">✕</button></span></div>`+
           `<div class="fpop-list">${rows||'<div class="fpop-empty">Нет данных</div>'}</div>`+
         `</div>`+
       `</div>`
@@ -513,6 +513,7 @@ function setFieldAll(el,checkAll){
 }
 function flipPop(dd){
   dd.classList.remove("pop-right");
+  if(window.matchMedia("(max-width:640px)").matches) return; // на телефоне панель во всю ширину
   const pop=dd.querySelector(".filter-pop"); if(!pop)return;
   if(pop.getBoundingClientRect().right>window.innerWidth-6) dd.classList.add("pop-right");
 }
@@ -527,6 +528,7 @@ function resetFilters(){ state.filters={}; closeAllDropdowns(); renderFilterBar(
 
 filterBar.addEventListener("click",e=>{
   if(e.target.closest("#fbClear")){resetFilters();return;}
+  if(e.target.closest("[data-fclose]")){closeAllDropdowns();return;}
   const fall=e.target.closest("[data-fall]"); if(fall){setFieldAll(fall,true);return;}
   const fnone=e.target.closest("[data-fnone]"); if(fnone){setFieldAll(fnone,false);return;}
   const btn=e.target.closest(".fdd-btn"); if(btn){toggleDropdown(btn);return;}
