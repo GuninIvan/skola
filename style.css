@@ -66,7 +66,7 @@
   .view-switch button+button{border-left:1px solid var(--line)}
   .view-switch button.active{background:var(--ink);color:#fff}
   .view-switch button span{display:inline}
-  .filters-toggle{display:none;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:9px 13px;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;min-height:var(--tap)}
+  .filters-toggle{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:9px 13px;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;min-height:var(--tap)}
   .filters-toggle .fcount{font-size:11px;background:var(--ink);color:#fff;border-radius:20px;padding:1px 7px}
   .filters-toggle.has-filters{border-color:var(--ink)}
   .filters-toggle.has-filters::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);flex:0 0 auto}
@@ -201,6 +201,20 @@
   .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:110;max-width:90vw;text-align:center}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.err{background:#C5331E}
+
+  /* ---------- DESKTOP (>640px): сворачиваемая панель, два вида ---------- */
+  @media(min-width:641px){
+    /* Средний режим «Карточки» на десктопе скрыт (зеркально скрытию «Списка» на мобильных) */
+    .view-switch button[data-view="cards"]{display:none}
+    /* Плавное сворачивание панели «Группировка и фильтры»: grid-трюк 1fr→0fr */
+    .filters{display:grid;grid-template-rows:1fr;transition:grid-template-rows .25s ease}
+    .filters-inner{min-height:0;overflow:hidden;transition:visibility .25s}
+    .filters.collapsed{grid-template-rows:0fr}
+    .filters.collapsed .filters-inner{visibility:hidden}
+    /* После завершения анимации разворота снимаем обрезку, чтобы попапы фильтров
+       (.filter-pop) не резались нижней границей панели; класс ставит app.js */
+    .filters.settled:not(.collapsed) .filters-inner{overflow:visible}
+  }
 
   /* ---------- MOBILE ---------- */
   @media(max-width:640px){

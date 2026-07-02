@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
 <meta name="theme-color" content="#FFFFFF">
 <title>Монитор замечаний · Школа</title>
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -62,14 +62,16 @@
     </button>
   </div>
 
-  <div class="filters" id="filters">
-    <div class="group-bar" id="groupBar"></div>
-    <div class="filter-bar" id="filterBar"></div>
-    <div class="stats" id="statusFilter">
-      <div class="chip active" data-status="all">Все <b id="cAll">0</b></div>
-      <div class="chip" data-status="open"><span class="dot open"></span>Не устранено <b id="cOpen">0</b></div>
-      <div class="chip" data-status="check"><span class="dot check"></span>На проверке <b id="cCheck">0</b></div>
-      <div class="chip" data-status="done"><span class="dot done"></span>Принято <b id="cDone">0</b></div>
+  <div class="filters settled" id="filters">
+    <div class="filters-inner">
+      <div class="group-bar" id="groupBar"></div>
+      <div class="filter-bar" id="filterBar"></div>
+      <div class="stats" id="statusFilter">
+        <div class="chip active" data-status="all">Все <b id="cAll">0</b></div>
+        <div class="chip" data-status="open"><span class="dot open"></span>Не устранено <b id="cOpen">0</b></div>
+        <div class="chip" data-status="check"><span class="dot check"></span>На проверке <b id="cCheck">0</b></div>
+        <div class="chip" data-status="done"><span class="dot done"></span>Принято <b id="cDone">0</b></div>
+      </div>
     </div>
   </div>
   <div class="role-note" id="roleNote"></div>
@@ -137,6 +139,6 @@
 </div>
 
 <script src="config.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

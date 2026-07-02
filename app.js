@@ -622,21 +622,36 @@ document.getElementById("searchInp").oninput=e=>{
   searchT=setTimeout(render,180);
 };
 document.getElementById("viewSwitch").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(!b)return;state.view=b.dataset.view;[...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x===b));render();});
-/* На мобильных вид «Список» недоступен (кнопка скрыта в CSS) — переключаем на «Карточки» */
+/* Доступность видов зависит от ширины (кнопки скрыты в CSS):
+   на мобильных недоступен «Список» → переключаем на «Карточки»;
+   на десктопе недоступны «Карточки» → переключаем на «Список» */
 const mqMobile=window.matchMedia("(max-width:640px)");
-function enforceMobileView(){
-  if(mqMobile.matches&&state.view==="list"){
-    state.view="cards";
-    [...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x.dataset.view==="cards"));
-    render();
-  }
+function enforceViewForWidth(){
+  let target=null;
+  if(mqMobile.matches&&state.view==="list") target="cards";
+  else if(!mqMobile.matches&&state.view==="cards") target="list";
+  if(!target) return;
+  state.view=target;
+  [...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x.dataset.view===target));
+  render();
 }
-if(mqMobile.addEventListener) mqMobile.addEventListener("change",enforceMobileView); else mqMobile.addListener(enforceMobileView);
-enforceMobileView();
+if(mqMobile.addEventListener) mqMobile.addEventListener("change",enforceViewForWidth); else mqMobile.addListener(enforceViewForWidth);
+enforceViewForWidth();
 document.getElementById("statusFilter").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;state.status=c.dataset.status;[...document.querySelectorAll(".chip")].forEach(x=>x.classList.toggle("active",x===c));render();});
 document.getElementById("filtersToggle").onclick=()=>{
-  const open=document.getElementById("filters").classList.toggle("open");
-  if(!open) closeAllDropdowns();
+  const f=document.getElementById("filters");
+  if(mqMobile.matches){
+    /* Телефон: панель скрыта по умолчанию, .open показывает её */
+    const open=f.classList.toggle("open");
+    if(!open) closeAllDropdowns();
+  }else{
+    /* Десктоп: панель видна по умолчанию, .collapsed плавно сворачивает.
+       .settled снимает overflow-обрезку после анимации разворота, чтобы
+       выпадающие списки фильтров не резались границей панели */
+    const collapsed=f.classList.toggle("collapsed");
+    if(collapsed){ f.classList.remove("settled"); closeAllDropdowns(); }
+    else setTimeout(()=>{ if(!f.classList.contains("collapsed")) f.classList.add("settled"); },260);
+  }
 };
 document.getElementById("refreshBtn").onclick=()=>loadData(true);
 
