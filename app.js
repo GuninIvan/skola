@@ -178,44 +178,77 @@ async function applyAction(id,to,label,photoBase64,photoMime,silentSuccess){
 }
 
 /* ===================== ФОТО ===================== */
-const photoCache=new Map();    // fileId -> dataUrl (для прокси/лайтбокса)
+const photoCache=new Map();    // "fileId|размер" -> dataUrl (для прокси/лайтбокса)
 function thumbURL(fileId){ return "https://lh3.googleusercontent.com/d/"+fileId+"=w400"; }
 function fullURL(fileId){ return "https://lh3.googleusercontent.com/d/"+fileId+"=w1600"; }
 
 // IntersectionObserver — грузим миниатюры лениво
 const imgObserver=("IntersectionObserver" in window)?new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{ if(e.isIntersecting){ loadThumb(e.target); imgObserver.unobserve(e.target);} });
+  entries.forEach(e=>{ if(e.isIntersecting){ enqueueThumb(e.target); imgObserver.unobserve(e.target);} });
 },{rootMargin:"200px"}):null;
 
-function loadThumb(img){
-  const fileId=img.dataset.fid;
-  if(!fileId)return;
-  if(CONFIG.PHOTO_VIA_PROXY){
-    proxyPhoto(fileId).then(u=>{ if(u){img.src=u;img.classList.remove("loading");} else fail(img); }).catch(()=>fail(img));
-  }else{
-    img.onload=()=>img.classList.remove("loading");
-    img.onerror=()=>{ // прямой thumbnail не дал картинку — пробуем прокси
-      proxyPhoto(fileId).then(u=>{ if(u){img.onerror=null;img.src=u;img.classList.remove("loading");} else fail(img); }).catch(()=>fail(img));
-    };
-    img.src=thumbURL(fileId);
+/* Очередь миниатюр: не больше THUMB_PARALLEL загрузок одновременно.
+   Залп из 10–20 одновременных запросов к lh3.googleusercontent.com ловит
+   429 (rate limit) → onerror → всё уходит в медленный прокси. Очередь
+   держит ровный темп, и 429 практически исчезают. */
+const THUMB_PARALLEL=4;
+let thumbActive=0; const thumbQueue=[];
+function enqueueThumb(img){ thumbQueue.push(img); pumpThumbs(); }
+function pumpThumbs(){
+  while(thumbActive<THUMB_PARALLEL && thumbQueue.length){
+    const img=thumbQueue.shift();
+    if(!img.isConnected) continue;               // элемент уже перерисован — пропускаем
+    thumbActive++;
+    loadThumb(img).finally(()=>{ thumbActive--; pumpThumbs(); });
   }
-  function fail(el){ el.classList.remove("loading"); el.classList.add("nophoto"); el.removeAttribute("src"); el.alt="нет фото"; }
 }
+
+// Одна попытка прямой загрузки в <img>; резолвится true/false по onload/onerror.
+function tryDirect_(img,url){
+  return new Promise(res=>{
+    img.onload =()=>{ img.onload=img.onerror=null; res(true);  };
+    img.onerror=()=>{ img.onload=img.onerror=null; res(false); };
+    img.src=url;
+  });
+}
+
+async function loadThumb(img){
+  const fileId=img.dataset.fid;
+  if(!fileId){ fail_(img); return; }
+  if(!CONFIG.PHOTO_VIA_PROXY){
+    // Прямой thumbnail с ретраями: 429 от lh3 — временная ошибка,
+    // со 2-й попытки обычно проходит. Только после этого — прокси.
+    const url=thumbURL(fileId), delays=[0,700,1800];
+    for(const d of delays){
+      if(d) await sleep(d);
+      if(await tryDirect_(img,url)){ img.classList.remove("loading"); return; }
+      img.removeAttribute("src");
+    }
+  }
+  const u=await proxyPhoto(fileId,"w400").catch(()=>null);  // фолбэк: прокси-миниатюра
+  if(u){ img.src=u; img.classList.remove("loading"); } else fail_(img);
+}
+function fail_(el){ el.classList.remove("loading"); el.classList.add("nophoto"); el.removeAttribute("src"); el.alt="нет фото"; }
+
 // В прокси передаём СРАЗУ fileId (клиент его всегда знает) — сервер отдаёт файл
 // напрямую, без полного чтения таблицы ради поиска по remarkId.
-async function proxyPhoto(fileId){
+// sz ("w400") — просим у сервера маленькую миниатюру вместо оригинала;
+// без sz (лайтбокс) — полный файл.
+async function proxyPhoto(fileId,sz){
   if(!fileId)return null;
-  if(photoCache.has(fileId))return photoCache.get(fileId);
+  const key=fileId+"|"+(sz||"full");
+  if(photoCache.has(key))return photoCache.get(key);
   try{
-    const res=await apiGet("photo",{id:fileId});
-    if(res.ok&&res.dataUrl){ photoCache.set(fileId,res.dataUrl); return res.dataUrl; }
+    const params={id:fileId}; if(sz)params.sz=sz;
+    const res=await apiGet("photo",params);
+    if(res.ok&&res.dataUrl){ photoCache.set(key,res.dataUrl); return res.dataUrl; }
   }catch(_){}
   return null;
 }
 function observeThumbs(){
   document.querySelectorAll("img.thumb[data-fid],img.big-photo[data-fid]").forEach(img=>{
     if(img.dataset.bound)return; img.dataset.bound="1";
-    if(imgObserver)imgObserver.observe(img); else loadThumb(img);
+    if(imgObserver)imgObserver.observe(img); else enqueueThumb(img);
   });
 }
 
