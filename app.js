@@ -132,17 +132,8 @@ document.getElementById("loginSkip").onclick=()=>{loginEl.classList.remove("on")
 document.getElementById("changeRole").onclick=()=>{pwd.value="";loginErr.textContent="";loginEl.classList.add("on");setTimeout(()=>pwd.focus(),50);};
 
 /* ===================== ДЕЙСТВИЯ (СТАТУС) ===================== */
-function actionsFor(it){
-  const r=state.role,out=[];
-  if(r==="contractor"){
-    if(it.status==="open") out.push({to:"check",cls:"act-done",label:"Отметить выполнение"});
-  }
-  if(r==="brusnika"){
-    if(it.status!=="done") out.push({to:"done",cls:"act-accept",label:"Принять"});
-    if(it.status!=="open") out.push({to:"open",cls:"act-reject",label:"Вернуть в работу"});
-  }
-  return out;
-}
+/* Быстрые кнопки в списке/карточках рисует actBtns() (секция РЕНДЕР),
+   кнопки внутри карточки работы — workActions(). Обе идут через applyAction. */
 async function applyAction(id,to,label,photoBase64,photoMime,silentSuccess){
   const it=DATA.find(d=>d.id===id);if(!it)return;
   const prev=it.status;
@@ -390,7 +381,14 @@ function photoPair(d){
   return `<div class="thumb-pair">${t1}${t2}</div>`;
 }
 function actBtns(d){
-  return `<button class="act act-card" data-card="${esc(d.id)}">Карточка работы</button>`;
+  // Быстрые действия по роли — те же переходы, что в карточке работы
+  const b=[];
+  if(state.role==="contractor"&&d.status==="open")
+    b.push(`<button class="act act-done" data-complete="${esc(d.id)}">Выполнено</button>`);
+  if(state.role==="brusnika"&&d.status!=="done")
+    b.push(`<button class="act act-accept" data-accept="${esc(d.id)}">Принять</button>`);
+  b.push(`<button class="act act-card" data-card="${esc(d.id)}">Карточка работы</button>`);
+  return b.join("");
 }
 function renderItem(d){
   if(state.view==="list"){
@@ -543,6 +541,15 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeAllDropdowns(
 app.addEventListener("click",e=>{
   const dph=e.target.closest("[data-donephoto]");if(dph&&!dph.classList.contains("nophoto")){openDonePhoto(dph.dataset.donephoto);return;}
   const ph=e.target.closest("[data-photo]");if(ph&&!ph.classList.contains("nophoto")){openPhoto(ph.dataset.photo);return;}
+  // Быстрые кнопки — та же логика, что из карточки работы
+  const cmp=e.target.closest("[data-complete]");if(cmp){openCompletion(cmp.dataset.complete,"Выполнено");return;}
+  const acc=e.target.closest("[data-accept]");
+  if(acc){
+    const id=acc.dataset.accept;
+    toast("Принять · "+STATUS.done.label, false, 3000);          // показываем сразу, не дожидаясь ответа сервера
+    applyAction(id,"done","Принять",undefined,undefined,true);   // сохранение идёт в фоне (silentSuccess=true)
+    return;
+  }
   const cd=e.target.closest("[data-card]");if(cd){openWork(cd.dataset.card);return;}
   const gh=e.target.closest(".group-head");if(gh){const k=gh.dataset.key;state.collapsed.has(k)?state.collapsed.delete(k):state.collapsed.add(k);render();}
 });
@@ -638,9 +645,9 @@ const doneSheet=document.getElementById("doneSheet"),doneDrop=document.getElemen
   donePvSize=document.getElementById("donePvSize"),doneConfirm=document.getElementById("doneConfirm");
 let doneCtx={id:null,label:"",photo:null};
 function openCompletion(id,label){
-  doneCtx={id,label:label||"Отметить выполнение",photo:null};
+  doneCtx={id,label:label||"Выполнено",photo:null};
   donePv.classList.remove("on");doneDrop.style.display="block";doneFile.value="";
-  doneConfirm.disabled=true;doneConfirm.textContent="Отметить выполнение";
+  doneConfirm.disabled=true;doneConfirm.textContent="Выполнено";
   doneSheet.classList.add("on");
 }
 function closeCompletion(){doneSheet.classList.remove("on");}
@@ -723,7 +730,7 @@ function workPhotoBlock(d){
 }
 function workActions(d){
   const r=state.role,b=[];
-  if(r==="contractor"&&d.status==="open") b.push(`<button class="act act-done" data-workcomplete="1">Отметить выполнение</button>`);
+  if(r==="contractor"&&d.status==="open") b.push(`<button class="act act-done" data-workcomplete="1">Выполнено</button>`);
   if(r==="brusnika"){
     b.push(`<button class="act act-edit" data-workedit="1"><span class="pencil">✎</span> Отредактировать</button>`);
     if(d.status!=="done") b.push(`<button class="act act-accept" data-workact="done|Принять">Принять</button>`);
@@ -768,7 +775,7 @@ workSheet.addEventListener("click",e=>{
   const dph=e.target.closest("[data-donephoto]");if(dph){openDonePhoto(dph.dataset.donephoto);return;}
   const ph=e.target.closest("[data-photo]");if(ph){openPhoto(ph.dataset.photo);return;}
   if(e.target.closest("[data-workedit]")){openEdit(curWorkId);return;}
-  if(e.target.closest("[data-workcomplete]")){openCompletion(curWorkId,"Отметить выполнение");return;}
+  if(e.target.closest("[data-workcomplete]")){openCompletion(curWorkId,"Выполнено");return;}
   const ac=e.target.closest("[data-workact]");
   if(ac){
     const[to,label]=ac.dataset.workact.split("|");

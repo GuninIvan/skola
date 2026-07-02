@@ -169,6 +169,7 @@
   .v-cards .c-remark{font-weight:600;margin:3px 0 6px}
   .v-cards .c-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}
   .v-cards .c-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:9px}
+  .v-cards .c-foot>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
   .v-big .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
   .v-big .item{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
@@ -180,6 +181,7 @@
   .v-big .big-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px}
   .v-big .big-grid dt{color:var(--muted)} .v-big .big-grid dd{margin:0;font-weight:600}
   .v-big .big-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+  .v-big .big-foot>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
   .lightbox{position:fixed;inset:0;z-index:95;background:rgba(10,16,24,.88);display:none;align-items:center;justify-content:center;padding:16px}
   .lightbox.on{display:flex}
