@@ -548,6 +548,17 @@ app.addEventListener("click",e=>{
 });
 document.getElementById("searchInp").oninput=e=>{state.search=e.target.value;render();};
 document.getElementById("viewSwitch").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(!b)return;state.view=b.dataset.view;[...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x===b));render();});
+/* На мобильных вид «Список» недоступен (кнопка скрыта в CSS) — переключаем на «Карточки» */
+const mqMobile=window.matchMedia("(max-width:640px)");
+function enforceMobileView(){
+  if(mqMobile.matches&&state.view==="list"){
+    state.view="cards";
+    [...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x.dataset.view==="cards"));
+    render();
+  }
+}
+if(mqMobile.addEventListener) mqMobile.addEventListener("change",enforceMobileView); else mqMobile.addListener(enforceMobileView);
+enforceMobileView();
 document.getElementById("statusFilter").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;state.status=c.dataset.status;[...document.querySelectorAll(".chip")].forEach(x=>x.classList.toggle("active",x===c));render();});
 document.getElementById("filtersToggle").onclick=()=>{
   const open=document.getElementById("filters").classList.toggle("open");
@@ -714,7 +725,7 @@ function workActions(d){
   const r=state.role,b=[];
   if(r==="contractor"&&d.status==="open") b.push(`<button class="act act-done" data-workcomplete="1">Отметить выполнение</button>`);
   if(r==="brusnika"){
-    b.push(`<button class="act act-edit" data-workedit="1">✎ Исправить</button>`);
+    b.push(`<button class="act act-edit" data-workedit="1"><span class="pencil">✎</span> Отредактировать</button>`);
     if(d.status!=="done") b.push(`<button class="act act-accept" data-workact="done|Принять">Принять</button>`);
     if(d.status!=="open") b.push(`<button class="act act-reject" data-workact="open|Вернуть в работу">Вернуть в работу</button>`);
   }

@@ -209,6 +209,7 @@
     .search{flex-basis:100%}
     .view-switch{flex:1}
     .view-switch button{flex:1;justify-content:center}
+    .view-switch button[data-view="list"]{display:none}
     .view-switch button span{display:none}
     .filters-toggle{display:inline-flex}
     .filters{display:none}
@@ -239,6 +240,7 @@
   /* ---------- Фото исправления + редактирование ---------- */
   .act-edit{background:var(--surface);color:var(--berry);border-color:var(--berry-soft)}
   .act-edit:hover{background:var(--berry-soft)}
+  .act-edit .pencil{display:inline-block;transform:scaleX(-1)}
   .sheet{position:fixed;inset:0;z-index:85;background:rgba(10,16,24,.55);display:none;align-items:flex-end;justify-content:center}
   .sheet.on{display:flex}
   .sheet-card{background:var(--surface);width:100%;max-width:440px;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;box-shadow:0 -8px 40px rgba(0,0,0,.25)}
