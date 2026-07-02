@@ -22,8 +22,10 @@ const state = {
   role:"observer", sessionToken:null,
   group:["block","room"], view:"list", search:"", status:"all",
   filters:{},   // { поле: Set(исключённых значений) }; пусто = показывать всё
-  collapsed:new Set(), loaded:false, loadError:false
+  collapsed:new Set(), loaded:false, loadError:false,
+  autoCollapsed:false   // группы 1-го уровня один раз свёрнуты при большом объёме
 };
+const AUTO_COLLAPSE_FROM = 800;   // с какого числа замечаний сворачивать при загрузке
 
 /* ===================== API ===================== */
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
@@ -81,6 +83,7 @@ async function loadData(background=false){
     if(!res || !res.ok) throw new Error(res && res.error || "Ответ без ok");
     DATA = res.remarks || [];
     state.loaded = true; state.loadError = false;
+    autoCollapseIfBig();      // на больших объёмах стартуем со свёрнутыми группами
     syncFilters();            // обновляем варианты фильтров под свежие данные
     render();                 // сохраняем раскрытые группы/скролл
   }catch(err){
@@ -94,6 +97,16 @@ async function loadData(background=false){
 
 function setRefreshing(on){
   document.getElementById("refreshBtn").classList.toggle("spin", !!on);
+}
+
+/* На больших объёмах (≥ AUTO_COLLAPSE_FROM) при ПЕРВОЙ загрузке сворачиваем
+   группы 1-го уровня: в DOM попадают только заголовки, страница открывается
+   мгновенно. Срабатывает один раз — дальше пользователь управляет сам. */
+function autoCollapseIfBig(){
+  if(state.autoCollapsed) return;
+  state.autoCollapsed = true;
+  if(DATA.length < AUTO_COLLAPSE_FROM || !state.group.length) return;
+  DATA.forEach(d => state.collapsed.add(groupLabel(d, state.group[0])));
 }
 
 /* ===================== АВТОРИЗАЦИЯ ===================== */
@@ -165,7 +178,7 @@ async function applyAction(id,to,label,photoBase64,photoMime,silentSuccess){
 }
 
 /* ===================== ФОТО ===================== */
-const photoCache=new Map();    // remarkId -> dataUrl (для прокси/лайтбокса)
+const photoCache=new Map();    // fileId -> dataUrl (для прокси/лайтбокса)
 function thumbURL(fileId){ return "https://lh3.googleusercontent.com/d/"+fileId+"=w400"; }
 function fullURL(fileId){ return "https://lh3.googleusercontent.com/d/"+fileId+"=w1600"; }
 
@@ -175,24 +188,27 @@ const imgObserver=("IntersectionObserver" in window)?new IntersectionObserver((e
 },{rootMargin:"200px"}):null;
 
 function loadThumb(img){
-  const id=img.dataset.rid, fileId=img.dataset.fid;
+  const fileId=img.dataset.fid;
   if(!fileId)return;
   if(CONFIG.PHOTO_VIA_PROXY){
-    proxyPhoto(id).then(u=>{ if(u){img.src=u;img.classList.remove("loading");} else fail(img); }).catch(()=>fail(img));
+    proxyPhoto(fileId).then(u=>{ if(u){img.src=u;img.classList.remove("loading");} else fail(img); }).catch(()=>fail(img));
   }else{
     img.onload=()=>img.classList.remove("loading");
     img.onerror=()=>{ // прямой thumbnail не дал картинку — пробуем прокси
-      proxyPhoto(id).then(u=>{ if(u){img.onerror=null;img.src=u;img.classList.remove("loading");} else fail(img); }).catch(()=>fail(img));
+      proxyPhoto(fileId).then(u=>{ if(u){img.onerror=null;img.src=u;img.classList.remove("loading");} else fail(img); }).catch(()=>fail(img));
     };
     img.src=thumbURL(fileId);
   }
   function fail(el){ el.classList.remove("loading"); el.classList.add("nophoto"); el.removeAttribute("src"); el.alt="нет фото"; }
 }
-async function proxyPhoto(remarkId){
-  if(photoCache.has(remarkId))return photoCache.get(remarkId);
+// В прокси передаём СРАЗУ fileId (клиент его всегда знает) — сервер отдаёт файл
+// напрямую, без полного чтения таблицы ради поиска по remarkId.
+async function proxyPhoto(fileId){
+  if(!fileId)return null;
+  if(photoCache.has(fileId))return photoCache.get(fileId);
   try{
-    const res=await apiGet("photo",{id:remarkId});
-    if(res.ok&&res.dataUrl){ photoCache.set(remarkId,res.dataUrl); return res.dataUrl; }
+    const res=await apiGet("photo",{id:fileId});
+    if(res.ok&&res.dataUrl){ photoCache.set(fileId,res.dataUrl); return res.dataUrl; }
   }catch(_){}
   return null;
 }
@@ -212,7 +228,7 @@ async function openPhoto(id){
   lbImg.style.display="none";lbSpin.style.display="block";lb.classList.add("on");
   const fileId=d.photo.fileId;
   const show=u=>{lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.onerror=tryProxy;lbImg.src=u;};
-  const tryProxy=async()=>{const u=await proxyPhoto(id);if(u){lbImg.onerror=null;lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.src=u;}else{lbSpin.textContent="Фото недоступно";}};
+  const tryProxy=async()=>{const u=await proxyPhoto(fileId);if(u){lbImg.onerror=null;lbImg.onload=()=>{lbSpin.style.display="none";lbImg.style.display="block";};lbImg.src=u;}else{lbSpin.textContent="Фото недоступно";}};
   if(CONFIG.PHOTO_VIA_PROXY) tryProxy(); else show(fullURL(fileId));
 }
 function openDonePhoto(id){
@@ -346,7 +362,10 @@ function renderTree(items,fields,depth,prefix){
   for(const[k,arr] of groupBy(items,fields[depth])){
     const path=prefix?prefix+"▸"+k:k, collapsed=state.collapsed.has(path);
     const lvlClass=depth===0?"lvl1":"lvl2";
-    html+=`<section class="group ${lvlClass}${collapsed?" collapsed":""}">${head(k,arr,depth+1,path)}<div class="items-wrap">${renderTree(arr,fields,depth+1,path)}</div></section>`;
+    // Содержимое свёрнутой группы в DOM не рендерим (CSS его всё равно прячет) —
+    // при 5000 строк это главная экономия. Раскрытие вызывает render() и дорисует.
+    const inner=collapsed?"":renderTree(arr,fields,depth+1,path);
+    html+=`<section class="group ${lvlClass}${collapsed?" collapsed":""}">${head(k,arr,depth+1,path)}<div class="items-wrap">${inner}</div></section>`;
   }
   return html;
 }
@@ -552,7 +571,13 @@ app.addEventListener("click",e=>{
   const cd=e.target.closest("[data-card]");if(cd){openWork(cd.dataset.card);return;}
   const gh=e.target.closest(".group-head");if(gh){const k=gh.dataset.key;state.collapsed.has(k)?state.collapsed.delete(k):state.collapsed.add(k);render();}
 });
-document.getElementById("searchInp").oninput=e=>{state.search=e.target.value;render();};
+/* Дебаунс: на тысячах строк полный ререндер на каждый символ подтормаживает */
+let searchT;
+document.getElementById("searchInp").oninput=e=>{
+  state.search=e.target.value;
+  clearTimeout(searchT);
+  searchT=setTimeout(render,180);
+};
 document.getElementById("viewSwitch").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(!b)return;state.view=b.dataset.view;[...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x===b));render();});
 /* На мобильных вид «Список» недоступен (кнопка скрыта в CSS) — переключаем на «Карточки» */
 const mqMobile=window.matchMedia("(max-width:640px)");
