@@ -191,7 +191,7 @@ const imgObserver=("IntersectionObserver" in window)?new IntersectionObserver((e
    Залп из 10–20 одновременных запросов к lh3.googleusercontent.com ловит
    429 (rate limit) → onerror → всё уходит в медленный прокси. Очередь
    держит ровный темп, и 429 практически исчезают. */
-const THUMB_PARALLEL=4;
+const THUMB_PARALLEL=6;
 let thumbActive=0; const thumbQueue=[];
 function enqueueThumb(img){ thumbQueue.push(img); pumpThumbs(); }
 function pumpThumbs(){
@@ -212,18 +212,28 @@ function tryDirect_(img,url){
   });
 }
 
+/* Здоровье прямого канала lh3 (на сессию):
+   - файлы не расшарены → lh3 отдаёт ПОСТОЯННЫЙ 403, ретраить бессмысленно:
+     после DIRECT_OFF_AFTER неудач подряд без единого успеха прямые попытки
+     отключаются и всё идёт сразу в прокси (без потери времени на каждую);
+   - канал доказанно живой (был хоть один успех) → редкая ошибка это 429,
+     делаем один быстрый ретрай. */
+let directOK=false, directFails=0;
+const DIRECT_OFF_AFTER=3;
+
 async function loadThumb(img){
   const fileId=img.dataset.fid;
   if(!fileId){ fail_(img); return; }
-  if(!CONFIG.PHOTO_VIA_PROXY){
-    // Прямой thumbnail с ретраями: 429 от lh3 — временная ошибка,
-    // со 2-й попытки обычно проходит. Только после этого — прокси.
-    const url=thumbURL(fileId), delays=[0,700,1800];
+  const directAllowed = !CONFIG.PHOTO_VIA_PROXY && (directOK || directFails<DIRECT_OFF_AFTER);
+  if(directAllowed){
+    const url=thumbURL(fileId);
+    const delays = directOK ? [0,600] : [0];     // ретрай — только на живом канале
     for(const d of delays){
       if(d) await sleep(d);
-      if(await tryDirect_(img,url)){ img.classList.remove("loading"); return; }
+      if(await tryDirect_(img,url)){ directOK=true; directFails=0; img.classList.remove("loading"); return; }
       img.removeAttribute("src");
     }
+    if(!directOK) directFails++;
   }
   const u=await proxyPhoto(fileId,"w400").catch(()=>null);  // фолбэк: прокси-миниатюра
   if(u){ img.src=u; img.classList.remove("loading"); } else fail_(img);
