@@ -381,13 +381,12 @@ function photoPair(d){
   return `<div class="thumb-pair">${t1}${t2}</div>`;
 }
 function actBtns(d){
-  // Быстрые действия по роли — те же переходы, что в карточке работы
-  const b=[];
+  // «Карточка работы» — вторая справа; быстрое действие по роли — крайнее справа
+  const b=[`<button class="act act-card" data-card="${esc(d.id)}">Карточка работы</button>`];
   if(state.role==="contractor"&&d.status==="open")
     b.push(`<button class="act act-done" data-complete="${esc(d.id)}">Выполнено</button>`);
   if(state.role==="brusnika"&&d.status!=="done")
     b.push(`<button class="act act-accept" data-accept="${esc(d.id)}">Принять</button>`);
-  b.push(`<button class="act act-card" data-card="${esc(d.id)}">Карточка работы</button>`);
   return b.join("");
 }
 function renderItem(d){
