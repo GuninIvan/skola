@@ -204,6 +204,11 @@
 
   /* ---------- DESKTOP (>640px): сворачиваемая панель, два вида ---------- */
   @media(min-width:641px){
+    /* Кнопка «Группировка и фильтры» выделена фирменным нейтральным серым (--grey #88909B) */
+    .filters-toggle{background:var(--grey);border-color:var(--grey);color:#fff}
+    .filters-toggle:hover{background:var(--muted);border-color:var(--muted)}
+    .filters-toggle .fcount{background:rgba(255,255,255,.22);color:#fff}
+    .filters-toggle.has-filters{border-color:var(--grey)}
     /* Средний режим «Карточки» на десктопе скрыт (зеркально скрытию «Списка» на мобильных) */
     .view-switch button[data-view="cards"]{display:none}
     /* Плавное сворачивание панели «Группировка и фильтры»: grid-трюк 1fr→0fr */
