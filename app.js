@@ -374,11 +374,24 @@ function renderState(kind,detail){
 
 function render(){
   if(!state.loaded){ if(state.loadError) return; return; }
-  const cnt=s=>DATA.filter(d=>d.status===s).length;
-  document.getElementById("cAll").textContent=DATA.length;
+  // База для счётчиков статусов: поиск + фильтры столбцов, но БЕЗ статуса —
+  // чтобы чипы показывали, сколько строк даст каждый статус при текущем сужении.
+  const q0=state.search.trim().toLowerCase();
+  const base=DATA.filter(d=>{
+    if(!passFilters(d)) return false;
+    if(q0){const hay=(d.remark+" "+d.elem+" "+d.room+" "+d.block+" "+d.org+" "+d.by).toLowerCase();if(!hay.includes(q0))return false;}
+    return true;
+  });
+  const cnt=s=>base.filter(d=>d.status===s).length;
+  document.getElementById("cAll").textContent=base.length;
   document.getElementById("cOpen").textContent=cnt("open");
   document.getElementById("cCheck").textContent=cnt("check");
   document.getElementById("cDone").textContent=cnt("done");
+  document.querySelectorAll("#statusFilter .chip").forEach(c=>{
+    const st=c.dataset.status;
+    c.classList.toggle("off", st!=="all" && cnt(st)===0);
+  });
+  updateFilterCounts();
   document.getElementById("totalCount").textContent=DATA.length;
   document.getElementById("fcount").textContent=state.group.length||"—";
   const ftgl=document.getElementById("filtersToggle");
@@ -388,7 +401,7 @@ function render(){
   const items=filtered();
   app.className="v-"+state.view;
   if(!items.length){
-    app.innerHTML=`<div class="empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><div>Ничего не найдено. Измените поиск или фильтр.</div></div>`;
+    app.innerHTML=`<div class="empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><div>Ничего не найдено. Измените поиск или фильтр.</div><button class="retry-btn" id="emptyReset">Сбросить всё</button></div>`;
     return;
   }
   if(state.group.length===0){
@@ -585,6 +598,45 @@ function toggleDropdown(btn){
 }
 function resetFilters(){ state.filters={}; closeAllDropdowns(); renderFilterBar(); render(); }
 
+/* Фасетный пересчёт: сколько строк даст каждый вариант столбца field
+   при текущем поиске, статусе и фильтрах ДРУГИХ столбцов (свой столбец
+   не учитываем, чтобы внутри него можно было вернуть снятые значения). */
+function optionCounts(field){
+  const q=state.search.trim().toLowerCase();
+  const m=new Map();
+  outer: for(const d of DATA){
+    if(state.status!=="all"&&d.status!==state.status) continue;
+    if(q){
+      const hay=(d.remark+" "+d.elem+" "+d.room+" "+d.block+" "+d.org+" "+d.by).toLowerCase();
+      if(!hay.includes(q)) continue;
+    }
+    for(const f of GROUP_FIELDS){
+      if(f.k===field) continue;
+      const ex=state.filters[f.k];
+      if(ex&&ex.size&&ex.has(groupLabel(d,f.k))) continue outer;
+    }
+    const v=groupLabel(d,field);
+    m.set(v,(m.get(v)||0)+1);
+  }
+  return m;
+}
+/* Обновляем счётчики и доступность вариантов без пересборки DOM,
+   чтобы открытый список не схлопывался. Вариант с нулём гасится;
+   если он при этом снят галочкой — блокируется совсем (включать бессмысленно),
+   а отмеченный остаётся кликабельным, чтобы его можно было снять. */
+function updateFilterCounts(){
+  filterBar.querySelectorAll(".filter-dd").forEach(dd=>{
+    const m=optionCounts(dd.dataset.field);
+    dd.querySelectorAll("label.fopt").forEach(row=>{
+      const cb=row.querySelector("input[data-val]"); if(!cb) return;
+      const c=m.get(cb.dataset.val)||0;
+      const cEl=row.querySelector(".fopt-c"); if(cEl) cEl.textContent=c;
+      row.classList.toggle("off", c===0);
+      cb.disabled = (c===0 && !cb.checked);
+    });
+  });
+}
+
 filterBar.addEventListener("click",e=>{
   if(e.target.closest("#fbClear")){resetFilters();return;}
   if(e.target.closest("[data-fclose]")){closeAllDropdowns();return;}
@@ -599,7 +651,14 @@ document.addEventListener("click",e=>{ if(!e.target.closest(".filter-dd")) close
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeAllDropdowns(); });
 
 /* ===================== СОБЫТИЯ СПИСКА ===================== */
+function resetAllNarrowing(){
+  state.search=""; document.getElementById("searchInp").value="";
+  state.status="all";
+  [...document.querySelectorAll("#statusFilter .chip")].forEach(x=>x.classList.toggle("active",x.dataset.status==="all"));
+  resetFilters();   // сам вызывает render()
+}
 app.addEventListener("click",e=>{
+  if(e.target.closest("#emptyReset")){resetAllNarrowing();return;}
   const dph=e.target.closest("[data-donephoto]");if(dph&&!dph.classList.contains("nophoto")){openDonePhoto(dph.dataset.donephoto);return;}
   const ph=e.target.closest("[data-photo]");if(ph&&!ph.classList.contains("nophoto")){openPhoto(ph.dataset.photo);return;}
   // Быстрые кнопки — та же логика, что из карточки работы
@@ -622,36 +681,21 @@ document.getElementById("searchInp").oninput=e=>{
   searchT=setTimeout(render,180);
 };
 document.getElementById("viewSwitch").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(!b)return;state.view=b.dataset.view;[...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x===b));render();});
-/* Доступность видов зависит от ширины (кнопки скрыты в CSS):
-   на мобильных недоступен «Список» → переключаем на «Карточки»;
-   на десктопе недоступны «Карточки» → переключаем на «Список» */
+/* На мобильных вид «Список» недоступен (кнопка скрыта в CSS) — переключаем на «Карточки» */
 const mqMobile=window.matchMedia("(max-width:640px)");
-function enforceViewForWidth(){
-  let target=null;
-  if(mqMobile.matches&&state.view==="list") target="cards";
-  else if(!mqMobile.matches&&state.view==="cards") target="list";
-  if(!target) return;
-  state.view=target;
-  [...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x.dataset.view===target));
-  render();
+function enforceMobileView(){
+  if(mqMobile.matches&&state.view==="list"){
+    state.view="cards";
+    [...document.querySelectorAll("#viewSwitch button")].forEach(x=>x.classList.toggle("active",x.dataset.view==="cards"));
+    render();
+  }
 }
-if(mqMobile.addEventListener) mqMobile.addEventListener("change",enforceViewForWidth); else mqMobile.addListener(enforceViewForWidth);
-enforceViewForWidth();
+if(mqMobile.addEventListener) mqMobile.addEventListener("change",enforceMobileView); else mqMobile.addListener(enforceMobileView);
+enforceMobileView();
 document.getElementById("statusFilter").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;state.status=c.dataset.status;[...document.querySelectorAll(".chip")].forEach(x=>x.classList.toggle("active",x===c));render();});
 document.getElementById("filtersToggle").onclick=()=>{
-  const f=document.getElementById("filters");
-  if(mqMobile.matches){
-    /* Телефон: панель скрыта по умолчанию, .open показывает её */
-    const open=f.classList.toggle("open");
-    if(!open) closeAllDropdowns();
-  }else{
-    /* Десктоп: панель видна по умолчанию, .collapsed плавно сворачивает.
-       .settled снимает overflow-обрезку после анимации разворота, чтобы
-       выпадающие списки фильтров не резались границей панели */
-    const collapsed=f.classList.toggle("collapsed");
-    if(collapsed){ f.classList.remove("settled"); closeAllDropdowns(); }
-    else setTimeout(()=>{ if(!f.classList.contains("collapsed")) f.classList.add("settled"); },260);
-  }
+  const open=document.getElementById("filters").classList.toggle("open");
+  if(!open) closeAllDropdowns();
 };
 document.getElementById("refreshBtn").onclick=()=>loadData(true);
 
