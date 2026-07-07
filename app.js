@@ -486,49 +486,73 @@ groupBar.addEventListener("click",e=>{
 /* На каждый из 9 столбцов (те же, что в группировке) — выпадающий список с
    чекбоксами всех встречающихся значений. По умолчанию все включены (видно всё).
    state.filters[поле] = Set(«снятых» значений); пусто/нет ключа = столбец не фильтрует.
-   Значение варианта = groupLabel(d,поле) — 1:1 с тем, как бьёт группировка. */
+   Значение варианта = groupLabel(d,поле) — 1:1 с тем, как бьёт группировка.
+   КАСКАД: список значений столбца X строится только по строкам, проходящим фильтры
+   всех ОСТАЛЬНЫХ столбцов (свой не учитываем — иначе нельзя вернуть снятые галочки).
+   Пример: выбрана «Организация 1» → в «Этаж» останутся только этажи организации 1;
+   выбраны организации 1 и 2 → этажи, где есть хотя бы одна из них. */
 const filterBar=document.getElementById("filterBar");
 let FILTER_OPTS={}, lastOptsSig="";
 
+function rowPassesOtherFilters(d,skipField){
+  for(const f of GROUP_FIELDS){
+    if(f.k===skipField) continue;
+    const ex=state.filters[f.k];
+    if(ex&&ex.size&&ex.has(groupLabel(d,f.k))) return false;
+  }
+  return true;
+}
+function sortOpts(arr,fieldKey){
+  if(fieldKey==="added"||fieldKey==="deadline"){
+    arr.sort((a,b)=>{
+      const ta=ruDateVal(a[0]),tb=ruDateVal(b[0]);
+      if(ta==null&&tb==null) return a[0].localeCompare(b[0],'ru',{numeric:true});
+      if(ta==null) return 1; if(tb==null) return -1; return ta-tb;
+    });
+  }else arr.sort((a,b)=>a[0].localeCompare(b[0],'ru',{numeric:true}));
+  return arr;
+}
 function buildFilterOptions(){
-  const acc={}; GROUP_FIELDS.forEach(f=>acc[f.k]=new Map());
-  DATA.forEach(d=>GROUP_FIELDS.forEach(f=>{
-    const v=groupLabel(d,f.k); acc[f.k].set(v,(acc[f.k].get(v)||0)+1);
-  }));
   const out={};
   GROUP_FIELDS.forEach(f=>{
-    const arr=[...acc[f.k].entries()];              // [значение, счётчик]
-    if(f.k==="added"||f.k==="deadline"){
-      arr.sort((a,b)=>{
-        const ta=ruDateVal(a[0]),tb=ruDateVal(b[0]);
-        if(ta==null&&tb==null) return a[0].localeCompare(b[0],'ru',{numeric:true});
-        if(ta==null) return 1; if(tb==null) return -1; return ta-tb;
-      });
-    }else arr.sort((a,b)=>a[0].localeCompare(b[0],'ru',{numeric:true}));
-    out[f.k]=arr;
+    const m=new Map();
+    DATA.forEach(d=>{
+      if(!rowPassesOtherFilters(d,f.k)) return;
+      const v=groupLabel(d,f.k); m.set(v,(m.get(v)||0)+1);
+    });
+    out[f.k]=sortOpts([...m.entries()],f.k);       // [значение, счётчик]
   });
   return out;
 }
 function optsSignature(opts){
   return GROUP_FIELDS.map(f=>f.k+":"+(opts[f.k]||[]).map(e=>e[0]).join("|")).join("§");
 }
+function fieldView(fieldKey){
+  const opts=FILTER_OPTS[fieldKey]||[], ex=state.filters[fieldKey];
+  const total=opts.length, sel=opts.reduce((n,[v])=>n+((ex&&ex.has(v))?0:1),0);
+  const active=!!(ex&&ex.size);                     // есть снятые значения — фильтр активен
+  const rows=opts.map(([v,c])=>{
+    const checked=!(ex&&ex.has(v));
+    return `<label class="fopt" title="${esc(v)}"><input type="checkbox" data-val="${esc(v)}"${checked?" checked":""}><span class="fopt-txt">${esc(v)}</span><span class="fopt-c">${c}</span></label>`;
+  }).join("");
+  return {opts,total,sel,active,rows};
+}
+function listHtml(rows){
+  return rows?rows+'<div class="fpop-nores">Ничего не найдено</div>':'<div class="fpop-empty">Нет данных</div>';
+}
 function renderFilterBar(){
   const parts=[`<span class="fb-label">Фильтры:</span>`];
   GROUP_FIELDS.forEach(f=>{
-    const opts=FILTER_OPTS[f.k]||[], ex=state.filters[f.k];
-    const total=opts.length, sel=opts.reduce((n,[v])=>n+((ex&&ex.has(v))?0:1),0);
-    const active=!!(ex&&ex.size&&sel<total);
-    const rows=opts.map(([v,c])=>{
-      const checked=!(ex&&ex.has(v));
-      return `<label class="fopt" title="${esc(v)}"><input type="checkbox" data-val="${esc(v)}"${checked?" checked":""}><span class="fopt-txt">${esc(v)}</span><span class="fopt-c">${c}</span></label>`;
-    }).join("");
+    const {opts,total,sel,active,rows}=fieldView(f.k);
     parts.push(
       `<div class="filter-dd${active?" on":""}" data-field="${f.k}">`+
         `<button type="button" class="fdd-btn">${esc(f.label)}<span class="fdd-badge">${active?sel+"/"+total:""}</span>`+
           `<svg class="fcaret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button>`+
         `<div class="filter-pop">`+
           `<div class="fpop-head"><span class="fpop-title">${esc(f.label)}</span><span class="fpop-acts"><button type="button" data-fall>Все</button><button type="button" data-fnone>Снять</button><button type="button" class="fpop-close" data-fclose aria-label="Закрыть">✕</button></span></div>`+
-          `<div class="fpop-list">${rows||'<div class="fpop-empty">Нет данных</div>'}</div>`+
+          `<div class="fpop-search"${opts.length>8?"":' style="display:none"'}><input type="text" placeholder="Найти в списке…" data-fsearch autocomplete="off"></div>`+
+          `<div class="fpop-list">${listHtml(rows)}</div>`+
+          `<div class="fpop-foot"><button type="button" class="fpop-done" data-fclose>Готово</button></div>`+
         `</div>`+
       `</div>`
     );
@@ -536,6 +560,27 @@ function renderFilterBar(){
   parts.push(`<button type="button" class="fb-clear" id="fbClear"><span class="fbx">✕</span>Сбросить фильтры</button>`);
   filterBar.innerHTML=parts.join("");
   filterBar.dataset.built="1";
+}
+/* Обновить один закрытый список под новые каскадные варианты, не пересоздавая всю панель */
+function refreshDd(dd){
+  const field=dd.dataset.field;
+  const {opts,total,sel,active,rows}=fieldView(field);
+  const list=dd.querySelector(".fpop-list"); if(list) list.innerHTML=listHtml(rows);
+  const srch=dd.querySelector(".fpop-search"); if(srch) srch.style.display=opts.length>8?"":"none";
+  resetPopSearch(dd);
+  dd.classList.toggle("on",active);
+  const badge=dd.querySelector(".fdd-badge"); if(badge) badge.textContent=active?(sel+"/"+total):"";
+}
+/* КАСКАД: после изменения галочек в одном столбце пересчитываем варианты остальных.
+   Редактируемый столбец не трогаем — его список от собственного фильтра не зависит,
+   а DOM (скролл, поиск, галочки) должен оставаться на месте, пока человек выбирает */
+function cascadeRefresh(exceptField){
+  FILTER_OPTS=buildFilterOptions();
+  lastOptsSig=optsSignature(FILTER_OPTS);   // чтобы syncFilters при поллинге не перерисовал панель зря
+  filterBar.querySelectorAll(".filter-dd").forEach(dd=>{
+    if(dd.dataset.field===exceptField) return;
+    refreshDd(dd);
+  });
 }
 // перестраиваем варианты только когда реально изменился набор значений (напр. после
 // подгрузки данных) — тогда открытый список при вводе/поллинге не схлопывается
@@ -550,7 +595,9 @@ function syncFilters(){
 function updateFieldBadge(field){
   const dd=filterBar.querySelector('.filter-dd[data-field="'+field+'"]'); if(!dd)return;
   const boxes=[...dd.querySelectorAll('input[type="checkbox"][data-val]')];
-  const total=boxes.length, sel=boxes.filter(b=>b.checked).length, active=sel<total;
+  const total=boxes.length, sel=boxes.filter(b=>b.checked).length;
+  const exn=state.filters[field]?state.filters[field].size:0;   // считаем и снятые значения, скрытые каскадом
+  const active=sel<total||exn>0;
   dd.classList.toggle("on",active);
   const badge=dd.querySelector(".fdd-badge"); if(badge) badge.textContent=active?(sel+"/"+total):"";
 }
@@ -560,7 +607,7 @@ function onCheckToggle(cb){
   let ex=state.filters[field]; if(!ex) ex=state.filters[field]=new Set();
   if(cb.checked) ex.delete(val); else ex.add(val);
   if(ex.size===0) delete state.filters[field];
-  updateFieldBadge(field); render();
+  updateFieldBadge(field); cascadeRefresh(field); render();
 }
 function setFieldAll(el,checkAll){
   const dd=el.closest(".filter-dd"); if(!dd)return;
@@ -568,7 +615,7 @@ function setFieldAll(el,checkAll){
   boxes.forEach(b=>b.checked=checkAll);
   if(checkAll) delete state.filters[field];
   else state.filters[field]=new Set(boxes.map(b=>b.dataset.val));
-  updateFieldBadge(field); render();
+  updateFieldBadge(field); cascadeRefresh(field); render();
 }
 function flipPop(dd){
   dd.classList.remove("pop-right");
@@ -576,21 +623,66 @@ function flipPop(dd){
   const pop=dd.querySelector(".filter-pop"); if(!pop)return;
   if(pop.getBoundingClientRect().right>window.innerWidth-6) dd.classList.add("pop-right");
 }
-function closeAllDropdowns(){ filterBar.querySelectorAll(".filter-dd.open").forEach(x=>x.classList.remove("open","pop-right")); }
+function resetPopSearch(dd){
+  const s=dd.querySelector("[data-fsearch]"); if(!s) return;
+  s.value="";
+  dd.querySelectorAll(".fopt").forEach(o=>o.style.display="");
+  const nr=dd.querySelector(".fpop-nores"); if(nr) nr.style.display="none";
+}
+/* Блокировка скролла фона под модалкой фильтра. На iOS overflow:hidden на body не
+   работает, поэтому фиксируем body и запоминаем/возвращаем позицию скролла */
+let savedScrollY=0;
+function lockScroll(){
+  if(document.body.classList.contains("fpop-open")) return;
+  savedScrollY=window.scrollY||0;
+  document.body.style.top=(-savedScrollY)+"px";
+  document.body.classList.add("fpop-open");
+}
+function unlockScroll(){
+  if(!document.body.classList.contains("fpop-open")) return;
+  document.body.classList.remove("fpop-open");
+  document.body.style.top="";
+  window.scrollTo(0,savedScrollY);
+}
+function closeAllDropdowns(){
+  filterBar.querySelectorAll(".filter-dd.open").forEach(x=>x.classList.remove("open","pop-right"));
+  unlockScroll();
+}
 function toggleDropdown(btn){
   const dd=btn.closest(".filter-dd"); if(!dd)return;
   const willOpen=!dd.classList.contains("open");
   closeAllDropdowns();
-  if(willOpen){dd.classList.add("open");flipPop(dd);}
+  if(willOpen){
+    dd.classList.add("open");flipPop(dd);resetPopSearch(dd);
+    if(window.matchMedia("(max-width:640px)").matches) lockScroll();
+    else dd.querySelector("[data-fsearch]")?.focus(); // на телефоне не фокусируем — не выскакивает клавиатура
+  }
 }
-function resetFilters(){ state.filters={}; closeAllDropdowns(); renderFilterBar(); render(); }
+function resetFilters(){
+  state.filters={}; closeAllDropdowns();
+  FILTER_OPTS=buildFilterOptions(); lastOptsSig=optsSignature(FILTER_OPTS);   // без фильтров каскад = полные списки
+  renderFilterBar(); render();
+}
 
 filterBar.addEventListener("click",e=>{
   if(e.target.closest("#fbClear")){resetFilters();return;}
   if(e.target.closest("[data-fclose]")){closeAllDropdowns();return;}
+  // На телефоне затемнение — псевдоэлемент самого .filter-dd: тап по нему закрывает окно
+  if(e.target.classList&&e.target.classList.contains("filter-dd")){closeAllDropdowns();return;}
   const fall=e.target.closest("[data-fall]"); if(fall){setFieldAll(fall,true);return;}
   const fnone=e.target.closest("[data-fnone]"); if(fnone){setFieldAll(fnone,false);return;}
   const btn=e.target.closest(".fdd-btn"); if(btn){toggleDropdown(btn);return;}
+});
+/* Живой поиск по значениям внутри открытого списка */
+filterBar.addEventListener("input",e=>{
+  const inp=e.target.closest("[data-fsearch]"); if(!inp) return;
+  const dd=inp.closest(".filter-dd"); if(!dd) return;
+  const q=inp.value.trim().toLowerCase(); let shown=0;
+  dd.querySelectorAll(".fopt").forEach(o=>{
+    const hit=!q||o.querySelector(".fopt-txt").textContent.toLowerCase().includes(q);
+    o.style.display=hit?"":"none"; if(hit) shown++;
+  });
+  const nr=dd.querySelector(".fpop-nores"); if(nr) nr.style.display=shown?"none":"block";
 });
 filterBar.addEventListener("change",e=>{
   const cb=e.target.closest('input[type="checkbox"][data-val]'); if(cb) onCheckToggle(cb);
@@ -640,15 +732,18 @@ enforceViewForWidth();
 document.getElementById("statusFilter").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;state.status=c.dataset.status;[...document.querySelectorAll(".chip")].forEach(x=>x.classList.toggle("active",x===c));render();});
 document.getElementById("filtersToggle").onclick=()=>{
   const f=document.getElementById("filters");
+  const ftgl=document.getElementById("filtersToggle");
   if(mqMobile.matches){
     /* Телефон: панель скрыта по умолчанию, .open показывает её */
     const open=f.classList.toggle("open");
+    ftgl.classList.toggle("expanded",open);
     if(!open) closeAllDropdowns();
   }else{
     /* Десктоп: панель видна по умолчанию, .collapsed плавно сворачивает.
        .settled снимает overflow-обрезку после анимации разворота, чтобы
        выпадающие списки фильтров не резались границей панели */
     const collapsed=f.classList.toggle("collapsed");
+    ftgl.classList.toggle("expanded",!collapsed);
     if(collapsed){ f.classList.remove("settled"); closeAllDropdowns(); }
     else setTimeout(()=>{ if(!f.classList.contains("collapsed")) f.classList.add("settled"); },260);
   }
@@ -667,7 +762,8 @@ let toastT;function toast(msg,isErr,ms){const t=document.getElementById("toast")
   function onScroll(){
     const y=window.scrollY||0;
     if(!isMobile()){ header.classList.remove("hide"); lastY=y; return; }
-    const filtersOpen=document.getElementById("filters").classList.contains("open");
+    const filtersOpen=document.getElementById("filters").classList.contains("open")
+                    ||document.body.classList.contains("fpop-open"); // открыта модалка фильтра — шапку не прячем (transform ломает fixed)
     const hh=header.offsetHeight;
     if(y<=hh+10 || filtersOpen) header.classList.remove("hide");      // у верха или открыты фильтры — всегда видна
     else if(y>lastY+6) header.classList.add("hide");                  // листаем вниз — прячем

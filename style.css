@@ -67,6 +67,9 @@
   .view-switch button.active{background:var(--ink);color:#fff}
   .view-switch button span{display:inline}
   .filters-toggle{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:9px 13px;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;min-height:var(--tap)}
+  /* Стрелка-индикатор: вниз — панель свёрнута (можно раскрыть), вверх — раскрыта (можно свернуть) */
+  .filters-toggle .ft-caret{transition:transform .2s;flex:0 0 auto;opacity:.85}
+  .filters-toggle.expanded .ft-caret{transform:rotate(180deg)}
   .filters-toggle .fcount{font-size:11px;background:var(--ink);color:#fff;border-radius:20px;padding:1px 7px}
   .filters-toggle.has-filters{border-color:var(--ink)}
   .filters-toggle.has-filters::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);flex:0 0 auto}
@@ -107,7 +110,13 @@
   .fpop-acts button{font-family:inherit;font-size:11.5px;color:var(--ink);background:var(--grey-soft);border:1px solid var(--line);border-radius:7px;padding:4px 8px;cursor:pointer}
   .fpop-acts button:hover{border-color:var(--muted)}
   .fpop-close{display:none;font-size:14px;line-height:1;padding:4px 8px;color:var(--muted)}
+  /* Поиск внутри длинного списка значений (выводится, когда вариантов много) */
+  .fpop-search{padding:8px 9px;border-bottom:1px solid var(--line);background:var(--surface)}
+  .fpop-search input{width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:8px;outline:none;background:var(--surface);color:var(--ink)}
+  .fpop-search input:focus{border-color:var(--ink)}
+  .fpop-nores{display:none;padding:12px;text-align:center;color:var(--muted);font-size:12px}
   .fpop-list{max-height:min(46vh,304px);overflow:auto;padding:4px;overscroll-behavior:contain}
+  .fpop-foot{display:none} /* кнопка «Готово» показывается только на телефоне (см. мобильный блок) */
   .fopt{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13px;min-height:38px}
   .fopt:hover{background:var(--grey-soft)}
   .fopt input{width:17px;height:17px;flex:0 0 auto;margin:0;accent-color:var(--ink);cursor:pointer}
@@ -223,7 +232,9 @@
 
   /* ---------- MOBILE ---------- */
   @media(max-width:640px){
-    header{transition:transform .25s ease;will-change:transform}
+    /* ВАЖНО: не ставить здесь will-change:transform — оно делает header контейнером
+       для position:fixed потомков, и модальные окна фильтров ломаются (висят внутри шапки) */
+    header{transition:transform .25s ease}
     header.hide{transform:translateY(-100%)}
     .head-top{flex-wrap:wrap;gap:9px}
     .role-badge{order:4;width:100%;justify-content:space-between;border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
@@ -237,13 +248,28 @@
     .filters.open{display:block;border-top:1px solid var(--line)}
     .group-bar,.stats{border-top:0}
     .filter-bar{gap:7px;padding-bottom:12px}
-    /* На телефоне выпадающая панель — во всю ширину под рядом фильтров (якорь — .filter-bar),
-       не привязана к кнопке, поэтому не уезжает за край и не перекрывает соседние кнопки */
+    /* На телефоне список значений — модальное окно по центру экрана с затемнённым фоном:
+       крупнее, дальше от края, легко скроллить и попадать по чекбоксам */
     .filter-dd{position:static}
-    .filter-pop{position:absolute;left:0;right:0;top:calc(100% + 6px);width:auto;max-width:none;z-index:50;box-shadow:0 14px 38px rgba(23,34,48,.22)}
-    .filter-dd.pop-right .filter-pop{left:0;right:0}
-    .fpop-list{max-height:48vh}
+    .filter-dd.open::before{content:"";position:fixed;inset:0;background:rgba(10,16,24,.5);z-index:88}
+    .filter-pop{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(94vw,460px);max-width:none;max-height:min(82vh,680px);z-index:89;border-radius:14px;box-shadow:0 18px 52px rgba(10,16,24,.4);flex-direction:column}
+    .filter-dd.open .filter-pop{display:flex}
+    .filter-dd.pop-right .filter-pop{left:50%;right:auto}
+    .fpop-head{flex:0 0 auto;padding:11px 12px}
+    .fpop-title{font-size:12px}
+    .fpop-acts button{font-size:12.5px;padding:7px 11px;border-radius:8px}
+    .fpop-search{flex:0 0 auto}
+    .fpop-search input{font-size:16px;padding:9px 12px} /* 16px — чтобы iOS не зумил поле при фокусе */
+    .fpop-list{flex:1 1 auto;min-height:0;max-height:none;-webkit-overflow-scrolling:touch;padding:5px}
+    .fopt{min-height:46px;font-size:14px;padding:8px 9px}
+    .fopt input{width:20px;height:20px}
     .fpop-close{display:inline-flex;align-items:center;justify-content:center}
+    /* Большая кнопка «Готово» внизу окна — очевидный способ закрыть после выбора */
+    .fpop-foot{display:block;flex:0 0 auto;padding:9px 10px calc(9px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+    .fpop-done{width:100%;font-family:inherit;font-size:14.5px;font-weight:600;background:var(--ink);color:#fff;border:0;border-radius:10px;padding:13px;cursor:pointer}
+    /* Блокировка фона: overflow:hidden на iOS не работает, поэтому фиксируем body,
+       позицию скролла сохраняет/возвращает JS (lockScroll/unlockScroll) */
+    body.fpop-open{position:fixed;left:0;right:0;width:100%;overflow:hidden}
     .group:not(.lvl1){margin-left:7px;padding-left:9px}
     .group-head h2{font-size:12.5px}
     .v-list .item{flex-wrap:wrap;align-items:flex-start}
