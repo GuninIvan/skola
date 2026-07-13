@@ -86,6 +86,7 @@ async function loadData(background=false){
     autoCollapseIfBig();      // на больших объёмах стартуем со свёрнутыми группами
     syncFilters();            // обновляем варианты фильтров под свежие данные
     render();                 // сохраняем раскрытые группы/скролл
+    saveCache();              // следующий визит откроется мгновенно из localStorage
   }catch(err){
     state.loadError = true;
     if(!background) renderState("error", String(err));
@@ -107,6 +108,37 @@ function autoCollapseIfBig(){
   state.autoCollapsed = true;
   if(DATA.length < AUTO_COLLAPSE_FROM || !state.group.length) return;
   DATA.forEach(d => state.collapsed.add(groupLabel(d, state.group[0])));
+}
+
+/* ===================== ЛОКАЛЬНЫЙ КЭШ ДАННЫХ =====================
+   «Stale-while-revalidate»: при открытии мгновенно показываем данные с
+   прошлого визита из localStorage, свежие грузим в фоне (см. СТАРТ).
+   Любая проблема (квота, битый JSON, сменился API_URL) — молча работаем
+   как раньше, с экраном загрузки. Ключ с версией: изменится формат
+   remark — поднять v, старый кэш будет проигнорирован. */
+const CACHE_KEY = "pult_data_v1";
+const CACHE_MAX_BYTES = 4*1024*1024;   // не пишем кэш больше ~4 МБ (квота localStorage)
+
+function saveCache(){
+  try{
+    const s = JSON.stringify({url:CONFIG.API_URL, ts:Date.now(), remarks:DATA});
+    if(s.length > CACHE_MAX_BYTES) return;
+    localStorage.setItem(CACHE_KEY, s);
+  }catch(_){ /* квота/приватный режим — не критично */ }
+}
+function restoreCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return false;
+    const c = JSON.parse(raw);
+    if(!c || c.url !== CONFIG.API_URL || !Array.isArray(c.remarks) || !c.remarks.length) return false;
+    DATA = c.remarks;
+    state.loaded = true;
+    autoCollapseIfBig();
+    syncFilters();
+    render();
+    return true;
+  }catch(_){ return false; }
 }
 
 /* ===================== АВТОРИЗАЦИЯ ===================== */
@@ -157,6 +189,7 @@ async function applyAction(id,to,label,photoBase64,photoMime,silentSuccess){
     const res=await apiPost(payload);
     if(res.ok && res.remark){
       Object.assign(it,res.remark);               // берём правду с сервера
+      saveCache();                                // кэш не должен «откатить» статус при следующем открытии
       render();refreshWork();
       if(!silentSuccess) toast(label+" · "+STATUS[to].label);
     }else{
@@ -890,7 +923,7 @@ editConfirm.onclick=async()=>{
       floor:eF.floor.value.trim(), block:eF.block.value.trim(), room:eF.room.value.trim(),
       org:eF.org.value.trim(), elem:eF.elem.value.trim(), remark:eF.remark.value.trim(),
       deadline:eF.deadline.value});   // <input type="date"> → «гггг-мм-дд» или пусто
-    if(res.ok&&res.remark){Object.assign(it,res.remark);render();refreshWork();closeEdit();toast("Изменения сохранены");}
+    if(res.ok&&res.remark){Object.assign(it,res.remark);saveCache();render();refreshWork();closeEdit();toast("Изменения сохранены");}
     else if(res.error==="AUTH"){toast("Сессия истекла, войдите заново",true);state.sessionToken=null;setRole("observer");closeEdit();}
     else{editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast(res.message||"Не удалось сохранить",true);}
   }catch(_){editConfirm.disabled=false;editConfirm.textContent="Сохранить";toast("Ошибка сети при сохранении",true);}
@@ -969,5 +1002,10 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&workSheet.classList
 /* ===================== СТАРТ ===================== */
 renderGroupChips();
 setRole("observer");
-loadData(false);
+/* Если есть кэш прошлого визита — показываем его сразу (без экрана загрузки),
+   а свежие данные тянем в фоне (background=true: спиннер только на кнопке).
+   Кэша нет (первый визит / очищен) — обычный путь с экраном загрузки. */
+const startedFromCache = restoreCache();
+if(startedFromCache) toast("Показаны сохранённые данные, обновляю…", false, 2500);
+loadData(startedFromCache);
 if(CONFIG.POLL_MS>0){ setInterval(()=>{ if(state.loaded&&!document.hidden) loadData(true); }, CONFIG.POLL_MS); }
