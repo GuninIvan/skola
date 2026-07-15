@@ -37,6 +37,13 @@
   .login-card .skip{width:100%;margin-top:8px;background:none;border:0;color:var(--muted);font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:6px}
   .login-err{color:#c0392b;font-size:13px;min-height:18px;margin-top:8px}
 
+  /* ---------- Notice banner ---------- */
+  .notice-banner{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;
+    background:var(--amber-soft);color:var(--amber-ink);
+    font-size:13px;font-weight:600;line-height:1.45;border-bottom:1px solid #F3B7AE}
+  .notice-banner svg{flex:0 0 auto;margin-top:0}
+  .notice-banner b{font-weight:800}
+
   /* ---------- Header ---------- */
   header{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:var(--shadow);padding-top:env(safe-area-inset-top)}
   /* сплошная подложка под зоной выреза/статус-бара, чтобы список не просвечивал сверху */
