@@ -3,147 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
-<meta name="theme-color" content="#FFFFFF">
-<title>Монитор замечаний · Школа</title>
-<link rel="stylesheet" href="style.css?v=13">
+<meta name="theme-color" content="#EFEFEF">
+<title>Монитор замечаний переехал · Школа</title>
+<style>
+  :root{
+    --bg:#EFEFEF; --surface:#FFFFFF; --ink:#37465B; --muted:#616B7A;
+    --line:#D7DADE; --line-strong:#B0B5BD;
+    --amber:#EF3B24; --amber-soft:#FCD8D4; --amber-ink:#C5331E;
+    --berry:#8C123C;
+    --shadow:0 1px 2px rgba(23,34,48,.06),0 4px 16px rgba(23,34,48,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+    padding:24px 14px calc(24px + env(safe-area-inset-bottom))}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+  .card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);
+    width:100%;max-width:560px;padding:26px 22px 22px}
+  @media(min-width:480px){.card{padding:30px 30px 26px}}
+
+  .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .logo{width:44px;height:44px;border-radius:12px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--amber),#C5331E);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px}
+  .head h1{margin:0;font-size:19px;font-weight:700;letter-spacing:-.2px}
+  .head p{margin:0;font-size:12.5px;color:var(--muted)}
+
+  .go{display:flex;align-items:center;justify-content:center;gap:9px;
+    background:var(--berry);color:#fff;text-decoration:none;
+    border-radius:10px;padding:15px 16px;font-size:16px;font-weight:600;margin:0 0 16px}
+  .go:hover{background:#7A0F34}
+  .go svg{flex:0 0 auto}
+
+  .notice{display:flex;gap:9px;align-items:flex-start;
+    background:var(--amber-soft);color:var(--amber-ink);
+    border-radius:10px;padding:13px 15px;margin:0 0 22px;
+    font-size:13.5px;font-weight:600;line-height:1.5}
+  .notice svg{flex:0 0 auto;margin-top:1px}
+  .notice b{font-weight:800}
+
+  h2{margin:0 0 8px;font-size:15.5px;font-weight:700}
+  .sub{margin:0 0 14px;color:var(--muted);font-size:14px}
+
+  .shots{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 6px}
+  .shots button{border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:var(--bg);padding:0;cursor:pointer;display:block}
+  .shots img{display:block;width:100%;height:auto}
+  .shots .cap{display:block;font-size:11.5px;color:var(--muted);padding:6px 8px;background:var(--surface);
+    border-top:1px solid var(--line);text-align:left}
+  .hint{margin:0 0 20px;font-size:12px;color:var(--muted);text-align:center}
+
+  .foot{margin:0;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+
+  button:focus-visible,a:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+
+  .lightbox{position:fixed;inset:0;z-index:100;background:rgba(23,34,48,.88);
+    display:none;align-items:center;justify-content:center;padding:16px}
+  .lightbox.on{display:flex}
+  .lightbox img{max-width:100%;max-height:calc(100vh - 90px);border-radius:10px;background:#fff}
+  .lb-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border:0;border-radius:50%;
+    background:rgba(255,255,255,.15);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+  .lb-close:hover{background:rgba(255,255,255,.28)}
+</style>
 </head>
 <body>
 
-<div class="ptr" id="ptr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg><span id="ptrText">Потяните для обновления</span></div>
-
-<div class="login" id="login">
-  <div class="login-card">
+<main class="card">
+  <div class="head">
     <div class="logo">⚠</div>
-    <h2>Войти под ролью</h2>
-    <p>Для отметок нужен пароль роли</p>
-    <input type="password" id="pwd" placeholder="••••" autocomplete="off" inputmode="numeric">
-    <button class="primary" id="loginBtn">Войти</button>
-    <button class="skip" id="loginSkip">Продолжить как Наблюдатель</button>
-    <div class="login-err" id="loginErr"></div>
+    <div>
+      <h1>Монитор замечаний переехал</h1>
+      <p>Объект: Школа</p>
+    </div>
   </div>
-</div>
 
-<header>
-  <div class="notice-banner" id="noticeBanner">
+  <!-- ЗАМЕНИТЕ href на новый адрес монитора -->
+  <a class="go" href="https://script.google.com/macros/s/AKfycbyubakIHH0XtksroRjDURDg_b9yQDzj6iCkWiA3UHoKKPyXFFuAJyaD5LusKCrgFakl-w/exec">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
+    Открыть новый монитор
+  </a>
+
+  <div class="notice">
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" fill="#FFC107" stroke="#E6A800" stroke-width="1"/><path d="M12 9v4.5" stroke="#37465B" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.3" fill="#37465B"/></svg>
-    <span>С <b>18.07.2026</b> ссылка не будет работать. Новую ссылку на монитор пришлём позже. Чтобы сохранить доступ&nbsp;— отправьте руководителю проекта гугл-почту в формате <b>@gmail.com</b>.</span>
-  </div>
-  <div class="head-top">
-    <div class="logo">⚠</div>
-    <div class="title">
-      <h1>Монитор замечаний</h1>
-      <p>Объект: Школа · <span id="totalCount">0</span> замечаний</p>
-    </div>
-    <div class="spacer"></div>
-    <button class="refresh-btn" id="refreshBtn" title="Обновить" aria-label="Обновить">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
-    </button>
-    <div class="role-badge">
-      <span class="role-pill" id="rolePill">—</span>
-      <button class="change-role" id="changeRole">сменить роль</button>
-    </div>
+    <span><b>Важно:</b> отправьте руководителю проекта почту вашего гугл-аккаунта в формате <b>@gmail.com</b>&nbsp;— без неё доступ не появится.</span>
   </div>
 
-  <div class="toolbar">
-    <div class="search">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-      <input id="searchInp" type="text" placeholder="Поиск: замечание, помещение, элемент…" autocomplete="off">
-    </div>
-    <div class="view-switch" id="viewSwitch">
-      <button data-view="list" class="active" title="Список">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Список</span>
-      </button>
-      <button data-view="cards" title="Карточки">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Карточки</span>
-      </button>
-      <button data-view="big" title="Большие">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg><span>Большие</span>
-      </button>
-    </div>
-    <button class="filters-toggle" id="filtersToggle">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-      Группировка и фильтры <span class="fcount" id="fcount">2</span>
-      <svg class="ft-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+  <h2>Что нужно при первом входе</h2>
+  <p class="sub">Откройте ссылку в браузере, где вы вошли в тот гугл-аккаунт, почту которого передали руководителю проекта. Google один раз попросит подтвердить доступ&nbsp;— как на скриншотах:</p>
+
+  <div class="shots">
+    <button type="button" data-full="1.jpg" aria-label="Скриншот 1 крупно">
+      <img src="1.jpg" alt="Шаг 1: запрос доступа, кнопка «Review permissions»" loading="lazy">
+      <span class="cap">1. «Review permissions»</span>
+    </button>
+    <button type="button" data-full="2.jpg" aria-label="Скриншот 2 крупно">
+      <img src="2.jpg" alt="Шаг 2: предупреждение Google, ссылка «Дополнительные настройки»" loading="lazy">
+      <span class="cap">2. «Дополнительные настройки»</span>
+    </button>
+    <button type="button" data-full="3.jpg" aria-label="Скриншот 3 крупно">
+      <img src="3.jpg" alt="Шаг 3: ссылка «Перейти на страницу (небезопасно)»" loading="lazy">
+      <span class="cap">3. «Перейти на страницу»</span>
+    </button>
+    <button type="button" data-full="4.jpg" aria-label="Скриншот 4 крупно">
+      <img src="4.jpg" alt="Шаг 4: вход в аккаунт Google, кнопка «Продолжить»" loading="lazy">
+      <span class="cap">4. Войти и «Продолжить»</span>
+    </button>
+    <button type="button" data-full="5.jpg" aria-label="Скриншот 5 крупно">
+      <img src="5.jpg" alt="Шаг 5: права доступа, «Выбрать все» и «Продолжить»" loading="lazy">
+      <span class="cap">5. «Выбрать все» → «Продолжить»</span>
     </button>
   </div>
+  <p class="hint">Нажмите на скриншот, чтобы открыть крупно</p>
 
-  <div class="filters collapsed" id="filters">
-    <div class="filters-inner">
-      <div class="group-bar" id="groupBar"></div>
-      <div class="filter-bar" id="filterBar"></div>
-      <div class="stats" id="statusFilter">
-        <div class="chip active" data-status="all">Все <b id="cAll">0</b></div>
-        <div class="chip" data-status="open"><span class="dot open"></span>Не устранено <b id="cOpen">0</b></div>
-        <div class="chip" data-status="check"><span class="dot check"></span>На проверке <b id="cCheck">0</b></div>
-        <div class="chip" data-status="done"><span class="dot done"></span>Принято <b id="cDone">0</b></div>
-      </div>
-    </div>
-  </div>
-  <div class="role-note" id="roleNote"></div>
-</header>
+  <p class="foot">После этого монитор работает как раньше. Сохраните новую ссылку в закладки.</p>
+</main>
 
-<main id="app"></main>
-
-<div class="lightbox" id="lightbox">
-  <div class="lb-inner">
-    <div class="lb-bar">
-      <div class="lb-meta" id="lbMeta"></div>
-      <button class="lb-close" id="lbClose" aria-label="Закрыть">×</button>
-    </div>
-    <div class="lb-spin" id="lbSpin" style="display:none">Загрузка фото…</div>
-    <img id="lbImg" src="" alt="Фото замечания">
-  </div>
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Просмотр скриншота">
+  <button class="lb-close" id="lbClose" aria-label="Закрыть">×</button>
+  <img id="lbImg" src="" alt="Скриншот шага входа">
 </div>
 
-<div class="toast" id="toast"></div>
+<script>
+  var lb = document.getElementById('lb'), lbImg = document.getElementById('lbImg');
+  document.querySelectorAll('.shots button').forEach(function(b){
+    b.addEventListener('click', function(){
+      lbImg.src = b.getAttribute('data-full');
+      lb.classList.add('on');
+    });
+  });
+  function closeLb(){ lb.classList.remove('on'); lbImg.src=''; }
+  document.getElementById('lbClose').addEventListener('click', closeLb);
+  lb.addEventListener('click', function(e){ if(e.target === lb) closeLb(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLb(); });
+</script>
 
-<div class="sheet" id="doneSheet">
-  <div class="sheet-card">
-    <div class="sheet-h"><h3>Отметить выполнение</h3><button class="sx" id="doneClose" aria-label="Закрыть">×</button></div>
-    <p class="sheet-sub">Приложите фото исправления — оно сохранится вместе с отметкой, замечание уйдёт на проверку.</p>
-    <div class="drop" id="doneDrop">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2z"/><circle cx="12" cy="13" r="3.2"/></svg>
-      <p class="dt">Снять или выбрать фото</p>
-      <p class="dh">JPG · сожмётся автоматически</p>
-    </div>
-    <div class="pv" id="donePv">
-      <img id="donePvImg" alt="Фото исправления">
-      <div class="pv-main"><p class="pv-name" id="donePvName">фото.jpg</p><p class="pv-size" id="donePvSize">—</p></div>
-      <button class="pv-x" id="donePvDel" aria-label="Удалить фото">×</button>
-    </div>
-    <input type="file" id="doneFile" accept="image/*" style="display:none">
-    <div class="sheet-acts">
-      <button class="act act-ghost" id="doneCancel">Отмена</button>
-      <button class="act act-primary" id="doneConfirm" disabled>Выполнено</button>
-    </div>
-  </div>
-</div>
-
-<div class="sheet" id="editSheet">
-  <div class="sheet-card">
-    <div class="sheet-h"><h3>Редактировать замечание</h3><button class="sx" id="editClose" aria-label="Закрыть">×</button></div>
-    <p class="sheet-sub">Изменения сохранятся в той же строке. Статус меняется кнопками «Принять» / «Вернуть в работу».</p>
-    <div class="frow">
-      <div class="fld"><label>Этаж</label><input id="eFloor" inputmode="numeric"></div>
-      <div class="fld"><label>Блок</label><input id="eBlock"></div>
-    </div>
-    <div class="fld"><label>Помещение</label><input id="eRoom"><p class="fh">Формат «этаж.блок.номер», напр. 5.2.14 — сохранится как текст.</p></div>
-    <div class="fld"><label>Ответственная организация</label><input id="eOrg"></div>
-    <div class="fld"><label>Конструктивный элемент</label><input id="eElem"></div>
-    <div class="fld"><label>Замечание</label><textarea id="eRemark"></textarea></div>
-    <div class="fld"><label>Срок устранения</label><input id="eDeadline" type="date"><p class="fh">Выберите дату из календаря. Оставьте пустым — срок будет снят.</p></div>
-    <div class="sheet-acts">
-      <button class="act act-ghost" id="editCancel">Отмена</button>
-      <button class="act act-save" id="editConfirm">Сохранить</button>
-    </div>
-  </div>
-</div>
-
-<div class="sheet" id="workSheet">
-  <div class="sheet-card" id="workBody"></div>
-</div>
-
-<script src="config.js?v=5"></script>
-<script src="app.js?v=12"></script>
 </body>
 </html>
